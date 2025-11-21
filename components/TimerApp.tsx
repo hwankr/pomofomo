@@ -19,6 +19,62 @@ const formatTime = (seconds: number) => {
 export default function TimerApp() {
   const [mode, setMode] = useState<'pomo' | 'stopwatch'>('pomo');
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // --- 상태 변수들 ---
+  const [pomoTime, setPomoTime] = useState(25 * 60);
+  const [initialPomoTime, setInitialPomoTime] = useState(25 * 60);
+  const [isPomoRunning, setIsPomoRunning] = useState(false);
+  const pomoRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [stopwatchTime, setStopwatchTime] = useState(0);
+  const [isStopwatchRunning, setIsStopwatchRunning] = useState(false);
+  const stopwatchRef = useRef<NodeJS.Timeout | null>(null);
+
+  // --- ☁️ 1. [로드] 서버에서 마지막 상태 가져오기 (알림 삭제됨) ---
+  useEffect(() => {
+    const loadServerState = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('timer_states')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (data) {
+        setPomoTime(data.pomo_time);
+        setStopwatchTime(data.stopwatch_time);
+        setMode(data.mode as 'pomo' | 'stopwatch');
+        // toast.success("지난 기록을 불러왔습니다."); // 삭제함: 조용히 로드
+      }
+      setIsLoaded(true);
+    };
+
+    loadServerState();
+  }, []);
+
+  // --- ☁️ 2. [저장] 상태를 서버에 저장하는 함수 ---
+  const syncStateToServer = async (
+    currentMode: string,
+    pTime: number,
+    sTime: number
+  ) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    await supabase.from('timer_states').upsert({
+      user_id: user.id,
+      mode: currentMode,
+      pomo_time: pTime,
+      stopwatch_time: sTime,
+    });
+  };
 
   // --- 🔊 소리 재생 ---
   const playAlarm = () => {
@@ -30,13 +86,12 @@ export default function TimerApp() {
     }
   };
 
-  // --- 💾 DB 저장 ---
+  // --- 💾 DB 저장 (완료 기록) ---
   const saveRecord = async (recordMode: string, duration: number) => {
     if (duration < 10) return;
 
     setIsSaving(true);
-    // 문구 변경: 감정 배제, 사실 전달
-    const toastId = toast.loading('데이터 저장 중...', {
+    const toastId = toast.loading('완료 기록 저장 중...', {
       style: {
         background: 'rgba(0, 0, 0, 0.8)',
         color: '#fff',
@@ -61,7 +116,6 @@ export default function TimerApp() {
 
       if (error) throw error;
 
-      // 문구 변경: "완료되었습니다."
       toast.success('저장이 완료되었습니다.', {
         id: toastId,
         style: {
@@ -79,22 +133,15 @@ export default function TimerApp() {
   };
 
   // --- 🍅 뽀모도로 로직 ---
-  const [pomoTime, setPomoTime] = useState(25 * 60);
-  const [initialPomoTime, setInitialPomoTime] = useState(25 * 60);
-  const [isPomoRunning, setIsPomoRunning] = useState(false);
-  const pomoRef = useRef<NodeJS.Timeout | null>(null);
-
   useEffect(() => {
     if (pomoTime === 0 && isPomoRunning) {
       if (pomoRef.current) clearInterval(pomoRef.current);
       setIsPomoRunning(false);
-
       playAlarm();
 
-      // 문구 변경: 종료 사실만 통보
       toast('집중 시간이 종료되었습니다.', {
         duration: 5000,
-        icon: '🔔', // 박수(👏) 대신 종(🔔) 아이콘으로 변경
+        icon: '🔔',
         style: {
           background: 'rgba(255, 255, 255, 0.1)',
           color: '#fff',
@@ -103,11 +150,13 @@ export default function TimerApp() {
           boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
           borderRadius: '16px',
           padding: '16px',
-          fontWeight: '500', // bold 제거하여 차분하게
+          fontWeight: '500',
         },
       });
 
       saveRecord('pomo', initialPomoTime);
+      setPomoTime(initialPomoTime);
+      syncStateToServer('pomo', initialPomoTime, stopwatchTime);
     }
   }, [pomoTime, isPomoRunning, initialPomoTime]);
 
@@ -115,24 +164,19 @@ export default function TimerApp() {
     if (isPomoRunning) {
       if (pomoRef.current) clearInterval(pomoRef.current);
       setIsPomoRunning(false);
-      // 문구 변경: "일시 정지됨"
       toast('타이머가 일시 정지되었습니다.', {
         icon: '⏸️',
         style: { background: '#333', color: '#fff' },
       });
+      syncStateToServer('pomo', pomoTime, stopwatchTime);
     } else {
       setIsPomoRunning(true);
-      // 문구 변경: "시작됩니다"
       toast('집중 모드를 시작합니다.', {
-        icon: '▶️', // 토마토 대신 재생 버튼
+        icon: '▶️',
         style: { background: '#333', color: '#fff' },
       });
-
       pomoRef.current = setInterval(() => {
-        setPomoTime((prev) => {
-          if (prev <= 0) return 0;
-          return prev - 1;
-        });
+        setPomoTime((prev) => (prev <= 0 ? 0 : prev - 1));
       }, 1000);
     }
   };
@@ -140,15 +184,14 @@ export default function TimerApp() {
   const setPomoDuration = (minutes: number) => {
     if (pomoRef.current) clearInterval(pomoRef.current);
     setIsPomoRunning(false);
-    setPomoTime(minutes * 60);
-    setInitialPomoTime(minutes * 60);
-    // 문구 변경: "설정됨"
+    const newTime = minutes * 60;
+    setPomoTime(newTime);
+    setInitialPomoTime(newTime);
     toast.success(
       `${minutes === 0.1 ? '5초' : minutes + '분'}으로 설정되었습니다.`,
-      {
-        style: { background: '#333', color: '#fff' },
-      }
+      { style: { background: '#333', color: '#fff' } }
     );
+    syncStateToServer('pomo', newTime, stopwatchTime);
   };
 
   const resetPomo = () => {
@@ -156,10 +199,6 @@ export default function TimerApp() {
   };
 
   // --- ⏱️ 스톱워치 로직 ---
-  const [stopwatchTime, setStopwatchTime] = useState(0);
-  const [isStopwatchRunning, setIsStopwatchRunning] = useState(false);
-  const stopwatchRef = useRef<NodeJS.Timeout | null>(null);
-
   const toggleStopwatch = () => {
     if (isStopwatchRunning) {
       if (stopwatchRef.current) clearInterval(stopwatchRef.current);
@@ -168,6 +207,7 @@ export default function TimerApp() {
         icon: '⏸️',
         style: { background: '#333', color: '#fff' },
       });
+      syncStateToServer('stopwatch', pomoTime, stopwatchTime);
     } else {
       setIsStopwatchRunning(true);
       toast('시간 측정을 시작합니다.', {
@@ -185,6 +225,7 @@ export default function TimerApp() {
     setStopwatchTime(0);
     setIsStopwatchRunning(false);
     if (stopwatchRef.current) clearInterval(stopwatchRef.current);
+    syncStateToServer('stopwatch', pomoTime, 0);
   };
 
   const resetStopwatch = () => {
@@ -194,6 +235,14 @@ export default function TimerApp() {
     toast('초기화되었습니다.', {
       style: { background: '#333', color: '#fff' },
     });
+    syncStateToServer('stopwatch', pomoTime, 0);
+  };
+
+  const changeMode = (newMode: 'pomo' | 'stopwatch') => {
+    setMode(newMode);
+    if (!isPomoRunning && !isStopwatchRunning) {
+      syncStateToServer(newMode, pomoTime, stopwatchTime);
+    }
   };
 
   useEffect(() => {
@@ -205,10 +254,9 @@ export default function TimerApp() {
 
   return (
     <div className="w-full max-w-md bg-gray-800 rounded-3xl shadow-2xl border border-gray-700 overflow-hidden mb-8 transition-all duration-300">
-      {/* 상단 탭 */}
       <div className="flex border-b border-gray-700">
         <button
-          onClick={() => setMode('pomo')}
+          onClick={() => changeMode('pomo')}
           className={`flex-1 py-4 text-lg font-medium transition-colors ${
             mode === 'pomo'
               ? 'bg-gray-700 text-red-400'
@@ -218,7 +266,7 @@ export default function TimerApp() {
           뽀모도로
         </button>
         <button
-          onClick={() => setMode('stopwatch')}
+          onClick={() => changeMode('stopwatch')}
           className={`flex-1 py-4 text-lg font-medium transition-colors ${
             mode === 'stopwatch'
               ? 'bg-gray-700 text-blue-400'
@@ -230,9 +278,10 @@ export default function TimerApp() {
       </div>
 
       <div className="p-8 flex flex-col items-center justify-center min-h-[300px]">
-        {mode === 'pomo' ? (
+        {!isLoaded ? (
+          <div className="text-gray-500 animate-pulse">동기화 중...</div>
+        ) : mode === 'pomo' ? (
           <div className="text-center animate-fade-in w-full">
-            {/* 상태 배지: 이모지 최소화, 단어 간결화 */}
             <div className="mb-6 flex justify-center">
               {isPomoRunning ? (
                 <span className="px-4 py-1 rounded-full bg-red-500/10 text-red-400 text-sm font-bold border border-red-500/30 flex items-center gap-2">
@@ -255,7 +304,6 @@ export default function TimerApp() {
             </div>
 
             <div className="flex gap-2 justify-center mb-8">
-              {/* 버튼 텍스트: 이모지 제거하고 깔끔하게 */}
               <button
                 onClick={() => setPomoDuration(25)}
                 className="px-4 py-1 rounded-full text-sm border border-gray-600 text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
@@ -299,7 +347,6 @@ export default function TimerApp() {
           </div>
         ) : (
           <div className="text-center animate-fade-in w-full">
-            {/* 스톱워치 상태 배지 */}
             <div className="mb-6 flex justify-center">
               {isStopwatchRunning ? (
                 <span className="px-4 py-1 rounded-full bg-blue-500/10 text-blue-400 text-sm font-bold border border-blue-500/30 flex items-center gap-2">
