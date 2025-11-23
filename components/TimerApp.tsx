@@ -30,13 +30,14 @@ export default function TimerApp() {
   const [isStopwatchRunning, setIsStopwatchRunning] = useState(false);
   const stopwatchRef = useRef<NodeJS.Timeout | null>(null);
 
-  // --- ☁️ 1. 로드 (로그인 한 사람만) ---
+  // ... (기존 로직 부분은 동일하지만, 스타일 적용을 위해 전체를 덮어쓰세요) ...
+
+  // --- ☁️ 로드 & 동기화 ---
   useEffect(() => {
     const loadServerState = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      // 로그인 안 했으면 서버에서 불러올 것도 없음 -> 그냥 패스
       if (!user) {
         setIsLoaded(true);
         return;
@@ -47,7 +48,6 @@ export default function TimerApp() {
         .select('*')
         .eq('user_id', user.id)
         .single();
-
       if (data) {
         setPomoTime(data.pomo_time);
         setStopwatchTime(data.stopwatch_time);
@@ -55,11 +55,9 @@ export default function TimerApp() {
       }
       setIsLoaded(true);
     };
-
     loadServerState();
   }, []);
 
-  // --- ☁️ 2. 동기화 (로그인 한 사람만) ---
   const syncStateToServer = async (
     currentMode: string,
     pTime: number,
@@ -68,8 +66,7 @@ export default function TimerApp() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return; // 로그인 안 했으면 조용히 종료
-
+    if (!user) return;
     await supabase.from('timer_states').upsert({
       user_id: user.id,
       mode: currentMode,
@@ -83,32 +80,20 @@ export default function TimerApp() {
       const audio = new Audio('/alarm.mp3');
       audio.play();
     } catch (error) {
-      console.error('Audio playback failed:', error);
+      console.error(error);
     }
   };
 
-  // --- 💾 DB 저장 (핵심 수정: 비로그인 시 에러 안 내고 패스) ---
   const saveRecord = async (recordMode: string, duration: number) => {
     if (duration < 10) return;
-
     const {
       data: { user },
     } = await supabase.auth.getUser();
-
-    // ⭐️ 로그인 안 했으면 여기서 "저장 안 함" 처리하고 끝냄
-    if (!user) {
-      // (선택사항) 사용자에게 저장이 안 됐음을 가볍게 알릴 수도 있고, 그냥 넘어갈 수도 있음
-      // 여기선 깔끔하게 아무것도 안 띄우거나, "로그인하면 기록됨" 힌트만 줄 수 있음
-      return;
-    }
+    if (!user) return;
 
     setIsSaving(true);
     const toastId = toast.loading('기록 저장 중...', {
-      style: {
-        background: 'rgba(0, 0, 0, 0.8)',
-        color: '#fff',
-        backdropFilter: 'blur(10px)',
-      },
+      style: { borderRadius: '10px', background: '#333', color: '#fff' },
     });
 
     try {
@@ -117,47 +102,22 @@ export default function TimerApp() {
         duration: duration,
         user_id: user.id,
       });
-
       if (error) throw error;
-
-      toast.success('저장이 완료되었습니다.', {
-        id: toastId,
-        style: {
-          background: 'rgba(0, 0, 0, 0.8)',
-          color: '#fff',
-          backdropFilter: 'blur(10px)',
-        },
-      });
+      toast.success('저장 완료', { id: toastId });
     } catch (e) {
-      console.error(e);
       toast.error('저장 실패', { id: toastId });
     } finally {
       setIsSaving(false);
     }
   };
 
-  // --- 🍅 뽀모도로 로직 ---
+  // --- 🍅 로직 ---
   useEffect(() => {
     if (pomoTime === 0 && isPomoRunning) {
       if (pomoRef.current) clearInterval(pomoRef.current);
       setIsPomoRunning(false);
       playAlarm();
-
-      toast('집중 시간이 종료되었습니다.', {
-        duration: 5000,
-        icon: '🔔',
-        style: {
-          background: 'rgba(255, 255, 255, 0.1)',
-          color: '#fff',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          backdropFilter: 'blur(12px)',
-          boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
-          borderRadius: '16px',
-          padding: '16px',
-          fontWeight: '500',
-        },
-      });
-
+      toast('집중 시간 종료', { icon: '🔔' });
       saveRecord('pomo', initialPomoTime);
       setPomoTime(initialPomoTime);
       syncStateToServer('pomo', initialPomoTime, stopwatchTime);
@@ -168,17 +128,9 @@ export default function TimerApp() {
     if (isPomoRunning) {
       if (pomoRef.current) clearInterval(pomoRef.current);
       setIsPomoRunning(false);
-      toast('타이머가 일시 정지되었습니다.', {
-        icon: '⏸️',
-        style: { background: '#333', color: '#fff' },
-      });
       syncStateToServer('pomo', pomoTime, stopwatchTime);
     } else {
       setIsPomoRunning(true);
-      toast('집중 모드를 시작합니다.', {
-        icon: '▶️',
-        style: { background: '#333', color: '#fff' },
-      });
       pomoRef.current = setInterval(() => {
         setPomoTime((prev) => (prev <= 0 ? 0 : prev - 1));
       }, 1000);
@@ -191,10 +143,6 @@ export default function TimerApp() {
     const newTime = minutes * 60;
     setPomoTime(newTime);
     setInitialPomoTime(newTime);
-    toast.success(
-      `${minutes === 0.1 ? '5초' : minutes + '분'}으로 설정되었습니다.`,
-      { style: { background: '#333', color: '#fff' } }
-    );
     syncStateToServer('pomo', newTime, stopwatchTime);
   };
 
@@ -202,22 +150,14 @@ export default function TimerApp() {
     setPomoDuration(25);
   };
 
-  // --- ⏱️ 스톱워치 로직 ---
+  // --- ⏱️ 로직 ---
   const toggleStopwatch = () => {
     if (isStopwatchRunning) {
       if (stopwatchRef.current) clearInterval(stopwatchRef.current);
       setIsStopwatchRunning(false);
-      toast('측정이 일시 정지되었습니다.', {
-        icon: '⏸️',
-        style: { background: '#333', color: '#fff' },
-      });
       syncStateToServer('stopwatch', pomoTime, stopwatchTime);
     } else {
       setIsStopwatchRunning(true);
-      toast('시간 측정을 시작합니다.', {
-        icon: '▶️',
-        style: { background: '#333', color: '#fff' },
-      });
       stopwatchRef.current = setInterval(() => {
         setStopwatchTime((prev) => prev + 1);
       }, 1000);
@@ -236,9 +176,6 @@ export default function TimerApp() {
     if (stopwatchRef.current) clearInterval(stopwatchRef.current);
     setIsStopwatchRunning(false);
     setStopwatchTime(0);
-    toast('초기화되었습니다.', {
-      style: { background: '#333', color: '#fff' },
-    });
     syncStateToServer('stopwatch', pomoTime, 0);
   };
 
@@ -256,149 +193,188 @@ export default function TimerApp() {
     };
   }, []);
 
+  // --- ✨ 디자인 테마 변수 ---
+  // 모드에 따라 색상 자동 변경
+  const themeColor = mode === 'pomo' ? 'rose' : 'indigo'; // 빨강 vs 파랑
+  const bgLight = mode === 'pomo' ? 'bg-rose-50' : 'bg-indigo-50';
+  const bgDark =
+    mode === 'pomo' ? 'dark:bg-rose-950/30' : 'dark:bg-indigo-950/30';
+  const textMain =
+    mode === 'pomo'
+      ? 'text-rose-600 dark:text-rose-400'
+      : 'text-indigo-600 dark:text-indigo-400';
+  const btnMain =
+    mode === 'pomo'
+      ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-200 dark:shadow-none'
+      : 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-indigo-200 dark:shadow-none';
+
   return (
-    <div className="w-full max-w-md bg-gray-800 rounded-3xl shadow-2xl border border-gray-700 overflow-hidden mb-8 transition-all duration-300">
-      <div className="flex border-b border-gray-700">
+    <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-3xl shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-slate-700 overflow-hidden transition-all duration-300">
+      {/* 상단 탭 (더 깔끔하게) */}
+      <div className="flex p-1 bg-gray-100 dark:bg-slate-900/50 m-2 rounded-2xl">
         <button
           onClick={() => changeMode('pomo')}
-          className={`flex-1 py-4 text-lg font-medium transition-colors ${
+          className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all ${
             mode === 'pomo'
-              ? 'bg-gray-700 text-red-400'
-              : 'bg-gray-800 text-gray-500 hover:bg-gray-750'
+              ? 'bg-white dark:bg-slate-700 text-rose-500 shadow-sm'
+              : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
           }`}
         >
-          뽀모도로
+          Pomodoro
         </button>
         <button
           onClick={() => changeMode('stopwatch')}
-          className={`flex-1 py-4 text-lg font-medium transition-colors ${
+          className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all ${
             mode === 'stopwatch'
-              ? 'bg-gray-700 text-blue-400'
-              : 'bg-gray-800 text-gray-500 hover:bg-gray-750'
+              ? 'bg-white dark:bg-slate-700 text-indigo-500 shadow-sm'
+              : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
           }`}
         >
-          스톱워치
+          Stopwatch
         </button>
       </div>
 
-      <div className="p-8 flex flex-col items-center justify-center min-h-[300px]">
+      <div
+        className={`p-8 flex flex-col items-center justify-center min-h-[320px] transition-colors duration-500 ${bgLight} ${bgDark}`}
+      >
         {!isLoaded ? (
-          <div className="text-gray-500 animate-pulse">준비 중...</div>
+          <div className="text-gray-400 animate-pulse text-sm font-medium">
+            동기화 중...
+          </div>
         ) : mode === 'pomo' ? (
+          // --- 🍅 뽀모도로 UI ---
           <div className="text-center animate-fade-in w-full">
+            {/* 상태 뱃지 */}
             <div className="mb-6 flex justify-center">
-              {isPomoRunning ? (
-                <span className="px-4 py-1 rounded-full bg-red-500/10 text-red-400 text-sm font-bold border border-red-500/30 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                  집중 모드
-                </span>
-              ) : (
-                <span className="px-4 py-1 rounded-full bg-gray-700 text-gray-400 text-sm font-medium border border-gray-600">
-                  대기
-                </span>
-              )}
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
+                  isPomoRunning
+                    ? 'bg-rose-100 text-rose-600 border-rose-200 dark:bg-rose-900/50 dark:text-rose-300 dark:border-rose-800'
+                    : 'bg-gray-100 text-gray-500 border-gray-200 dark:bg-slate-700 dark:text-gray-400 dark:border-slate-600'
+                }`}
+              >
+                {isPomoRunning ? 'Focusing' : 'Ready'}
+              </span>
             </div>
 
+            {/* 시간 타이머 (큰 숫자) */}
             <div
-              className={`text-7xl font-bold mb-8 font-mono tabular-nums tracking-tighter transition-colors ${
-                isPomoRunning ? 'text-red-400' : 'text-gray-500'
-              }`}
+              className={`text-7xl sm:text-8xl font-black mb-8 font-mono tracking-tighter transition-colors ${textMain}`}
             >
               {formatTime(pomoTime)}
             </div>
 
+            {/* 시간 설정 칩 (더 모던하게) */}
             <div className="flex gap-2 justify-center mb-8">
-              <button
-                onClick={() => setPomoDuration(25)}
-                className="px-4 py-1 rounded-full text-sm border border-gray-600 text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
-              >
-                집중 (25분)
-              </button>
-              <button
-                onClick={() => setPomoDuration(5)}
-                className="px-4 py-1 rounded-full text-sm border border-gray-600 text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
-              >
-                휴식 (5분)
-              </button>
-              <button
-                onClick={() => setPomoDuration(0.1)}
-                className="px-4 py-1 rounded-full text-sm border border-red-900 text-red-500 hover:bg-red-900 transition-colors"
-              >
-                테스트 (5초)
-              </button>
+              {[25, 5, 0.1].map((min) => (
+                <button
+                  key={min}
+                  onClick={() => setPomoDuration(min)}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 shadow-sm border border-gray-200 dark:border-slate-600 hover:border-rose-300 dark:hover:border-rose-500 hover:text-rose-500 transition-all active:scale-95"
+                >
+                  {min === 0.1 ? 'Test' : `${min}m`}
+                </button>
+              ))}
             </div>
 
-            <div className="flex gap-4 justify-center">
+            {/* 메인 버튼 */}
+            <div className="flex gap-3 justify-center items-center">
               <button
                 onClick={togglePomo}
-                className={`px-8 py-3 rounded-xl font-bold text-lg transition-all ${
+                className={`px-10 py-4 rounded-2xl font-bold text-lg transition-all active:scale-95 shadow-lg ${
                   isPomoRunning
-                    ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/30'
-                    : 'bg-red-600 text-white hover:bg-red-700 shadow-lg'
+                    ? 'bg-white border-2 border-rose-100 text-rose-500 hover:bg-rose-50 dark:bg-slate-800 dark:border-rose-900 dark:text-rose-400'
+                    : btnMain
                 }`}
               >
-                {isPomoRunning ? '일시 정지' : '시작'}
+                {isPomoRunning ? 'Pause' : 'Start Focus'}
               </button>
+
               {!isPomoRunning && pomoTime !== initialPomoTime && (
                 <button
                   onClick={resetPomo}
-                  className="px-4 py-3 rounded-xl font-medium text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+                  className="p-4 rounded-2xl bg-white dark:bg-slate-700 text-gray-400 hover:text-gray-600 shadow-sm border border-gray-200 dark:border-slate-600 transition-all"
                 >
-                  초기화
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className="w-6 h-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+                    />
+                  </svg>
                 </button>
               )}
             </div>
           </div>
         ) : (
+          // --- ⏱️ 스톱워치 UI ---
           <div className="text-center animate-fade-in w-full">
             <div className="mb-6 flex justify-center">
-              {isStopwatchRunning ? (
-                <span className="px-4 py-1 rounded-full bg-blue-500/10 text-blue-400 text-sm font-bold border border-blue-500/30 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                  측정 중
-                </span>
-              ) : (
-                <span className="px-4 py-1 rounded-full bg-gray-700 text-gray-400 text-sm font-medium border border-gray-600">
-                  대기
-                </span>
-              )}
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
+                  isStopwatchRunning
+                    ? 'bg-indigo-100 text-indigo-600 border-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300 dark:border-indigo-800'
+                    : 'bg-gray-100 text-gray-500 border-gray-200 dark:bg-slate-700 dark:text-gray-400 dark:border-slate-600'
+                }`}
+              >
+                {isStopwatchRunning ? 'Tracking' : 'Ready'}
+              </span>
             </div>
 
             <div
-              className={`text-7xl font-bold mb-8 font-mono tabular-nums tracking-tighter transition-colors ${
-                isStopwatchRunning ? 'text-blue-400' : 'text-gray-500'
-              }`}
+              className={`text-7xl sm:text-8xl font-black mb-8 font-mono tracking-tighter transition-colors ${textMain}`}
             >
               {formatTime(stopwatchTime)}
             </div>
 
-            <div className="flex gap-4 justify-center">
+            <div className="flex gap-3 justify-center items-center">
               <button
                 onClick={toggleStopwatch}
-                className={`px-8 py-3 rounded-xl font-bold text-lg transition-all ${
+                className={`px-10 py-4 rounded-2xl font-bold text-lg transition-all active:scale-95 shadow-lg ${
                   isStopwatchRunning
-                    ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/30'
-                    : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg'
+                    ? 'bg-white border-2 border-indigo-100 text-indigo-500 hover:bg-indigo-50 dark:bg-slate-800 dark:border-indigo-900 dark:text-indigo-400'
+                    : btnMain
                 }`}
               >
-                {isStopwatchRunning ? '일시 정지' : '시작'}
+                {isStopwatchRunning ? 'Pause' : 'Start'}
               </button>
+
               {!isStopwatchRunning && stopwatchTime > 0 && (
-                <button
-                  onClick={handleStopwatchSave}
-                  disabled={isSaving}
-                  className="px-4 py-3 rounded-xl font-bold text-white bg-green-600 hover:bg-green-700 shadow-lg transition-all flex items-center gap-2"
-                >
-                  {isSaving ? '저장 중...' : '저장'}
-                </button>
-              )}
-              {!isStopwatchRunning && stopwatchTime > 0 && !isSaving && (
-                <button
-                  onClick={resetStopwatch}
-                  className="px-4 py-3 rounded-xl font-medium text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
-                >
-                  초기화
-                </button>
+                <>
+                  <button
+                    onClick={handleStopwatchSave}
+                    disabled={isSaving}
+                    className="px-6 py-4 rounded-2xl font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-200 dark:shadow-none transition-all flex items-center gap-2"
+                  >
+                    {isSaving ? 'Saving...' : 'Save'}
+                  </button>
+                  <button
+                    onClick={resetStopwatch}
+                    className="p-4 rounded-2xl bg-white dark:bg-slate-700 text-gray-400 hover:text-gray-600 shadow-sm border border-gray-200 dark:border-slate-600 transition-all"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2.5}
+                      stroke="currentColor"
+                      className="w-6 h-6"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3"
+                      />
+                    </svg>
+                  </button>
+                </>
               )}
             </div>
           </div>

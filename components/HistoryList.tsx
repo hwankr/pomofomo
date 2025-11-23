@@ -20,8 +20,6 @@ export default function HistoryList() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-
-      // 로그인 안 했으면 데이터 요청 자체를 안 함
       if (!user) {
         setLoading(false);
         return;
@@ -32,12 +30,12 @@ export default function HistoryList() {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(5); // 5개만 보여줘서 깔끔하게
 
       if (error) throw error;
       if (data) setHistory(data);
     } catch (error) {
-      console.error('데이터 불러오기 실패:', error);
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -50,61 +48,67 @@ export default function HistoryList() {
   const formatDuration = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
-    return `${m}분 ${s}초`;
+    return `${m}m ${s}s`;
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return `${
-      date.getMonth() + 1
-    }월 ${date.getDate()}일 ${date.getHours()}:${date
+    return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${date
       .getMinutes()
       .toString()
       .padStart(2, '0')}`;
   };
 
   return (
-    <div className="w-full max-w-md">
-      <div className="flex justify-between items-center mb-4 px-2">
-        <h3 className="text-xl font-bold text-white">📋 최근 학습 기록</h3>
+    <div className="w-full max-w-md mt-4">
+      <div className="flex justify-between items-center mb-3 px-2">
+        <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          Recent Activity
+        </h3>
         <button
           onClick={fetchHistory}
-          className="text-sm text-gray-400 hover:text-white"
+          className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
         >
-          새로고침
+          Refresh
         </button>
       </div>
 
-      <div className="bg-gray-800 rounded-2xl p-4 shadow-xl border border-gray-700">
+      <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
         {loading ? (
-          <div className="text-center text-gray-500 py-4">
-            기록을 불러오는 중...
+          <div className="text-center text-gray-400 py-8 text-sm">
+            Loading...
           </div>
         ) : history.length === 0 ? (
-          <div className="text-center text-gray-500 py-4">
-            아직 기록이 없어요. <br /> 공부를 시작해보세요!
+          <div className="text-center text-gray-400 py-8 text-sm">
+            No records yet.
           </div>
         ) : (
-          <ul className="space-y-3">
+          <ul className="divide-y divide-gray-100 dark:divide-slate-700">
             {history.map((item) => (
               <li
                 key={item.id}
-                className="flex justify-between items-center p-3 bg-gray-700/50 rounded-xl hover:bg-gray-700 transition-colors"
+                className="flex justify-between items-center p-4 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
+                      item.mode === 'pomo'
+                        ? 'bg-rose-100 text-rose-500 dark:bg-rose-900/30'
+                        : 'bg-indigo-100 text-indigo-500 dark:bg-indigo-900/30'
+                    }`}
+                  >
                     {item.mode === 'pomo' ? '🍅' : '⏱️'}
-                  </span>
+                  </div>
                   <div>
-                    <div className="font-bold text-gray-200">
-                      {item.mode === 'pomo' ? '뽀모도로' : '스톱워치'}
+                    <div className="font-bold text-gray-700 dark:text-gray-200 text-sm">
+                      {item.mode === 'pomo' ? 'Pomodoro' : 'Stopwatch'}
                     </div>
                     <div className="text-xs text-gray-400">
                       {formatDate(item.created_at)}
                     </div>
                   </div>
                 </div>
-                <div className="font-mono text-lg font-bold text-white">
+                <div className="font-mono font-bold text-gray-800 dark:text-white">
                   {formatDuration(item.duration)}
                 </div>
               </li>
