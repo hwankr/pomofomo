@@ -19,7 +19,6 @@ interface TimerAppProps {
   settingsUpdated: number;
 }
 
-// 프리셋 타입 정의
 type Preset = {
   id: string;
   label: string;
@@ -39,6 +38,7 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
   const [isRunning, setIsRunning] = useState(false);
   const [cycleCount, setCycleCount] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const isRunningRef = useRef(false);
 
   const [stopwatchTime, setStopwatchTime] = useState(0);
   const [isStopwatchRunning, setIsStopwatchRunning] = useState(false);
@@ -52,41 +52,43 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
     autoStartPomos: false,
     longBreakInterval: 4,
     volume: 50,
-    // ✨ 기본 프리셋 (설정 파일 없을 때용)
     presets: [
-      { id: '1', label: '🍅 집중', minutes: 25 },
-      { id: '2', label: '☕ 휴식', minutes: 5 },
-      { id: '3', label: '⚡ 테스트', minutes: 0.1 },
+      { id: '1', label: '작업1', minutes: 25 },
+      { id: '2', label: '작업2', minutes: 50 },
+      { id: '3', label: '작업3', minutes: 90 },
     ] as Preset[],
   });
 
-  const loadSettings = useCallback(() => {
-    const saved = localStorage.getItem('pomofomo_settings');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setSettings((prev) => ({
-        ...prev,
-        ...parsed,
-        // 저장된 프리셋이 있으면 덮어쓰고, 없으면 기본값 유지
-        presets:
-          parsed.presets && parsed.presets.length > 0
-            ? parsed.presets
-            : prev.presets,
-      }));
+  useEffect(() => {
+    const load = () => {
+      const saved = localStorage.getItem('pomofomo_settings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setSettings((prev) => ({
+          ...prev,
+          ...parsed,
+          presets:
+            parsed.presets && parsed.presets.length > 0
+              ? parsed.presets
+              : prev.presets,
+        }));
 
-      if (!isRunning) {
-        if (timerMode === 'focus') setTimeLeft(parsed.pomoTime * 60);
-        else if (timerMode === 'shortBreak')
-          setTimeLeft(parsed.shortBreak * 60);
-        else if (timerMode === 'longBreak') setTimeLeft(parsed.longBreak * 60);
+        if (!isRunningRef.current) {
+          if (timerMode === 'focus') setTimeLeft(parsed.pomoTime * 60);
+          else if (timerMode === 'shortBreak')
+            setTimeLeft(parsed.shortBreak * 60);
+          else if (timerMode === 'longBreak')
+            setTimeLeft(parsed.longBreak * 60);
+        }
       }
-    }
-    setIsLoaded(true);
-  }, [isRunning, timerMode]);
+      setIsLoaded(true);
+    };
+    load();
+  }, [settingsUpdated]);
 
   useEffect(() => {
-    loadSettings();
-  }, [settingsUpdated, loadSettings]);
+    isRunningRef.current = isRunning;
+  }, [isRunning]);
 
   const playAlarm = () => {
     try {
@@ -130,7 +132,6 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
     }
   };
 
-  // 🍅 타이머 로직
   useEffect(() => {
     if (timeLeft === 0 && isRunning) {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -202,7 +203,6 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
     else setTimeLeft(settings.longBreak * 60);
   };
 
-  // ✨ 프리셋 버튼 클릭 핸들러 (안전장치 포함)
   const handlePresetClick = (minutes: number) => {
     if (isRunning) {
       toast.error('타이머가 작동 중입니다.\n먼저 정지해주세요.', {
@@ -212,11 +212,8 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
       return;
     }
 
-    // 1. 타이머 시간 변경
-    setTimerMode('focus'); // 프리셋 누르면 자동으로 집중 모드로
+    setTimerMode('focus');
     setTimeLeft(minutes * 60);
-
-    // 2. 설정값도 임시로 업데이트 (다음에 다시 눌렀을 때 기억하도록)
     setSettings((prev) => ({ ...prev, pomoTime: minutes }));
 
     toast.success(`${minutes === 0.1 ? '5초' : minutes + '분'}으로 설정됨`, {
@@ -272,22 +269,43 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
     };
   }, []);
 
-  const getThemeColor = () => {
-    if (tab === 'stopwatch') return 'indigo';
-    if (timerMode === 'shortBreak' || timerMode === 'longBreak')
-      return 'emerald';
-    return 'rose';
+  // ✨ [수정됨] 색상을 변수 조립이 아니라 '완전한 문자열'로 반환하도록 변경
+  // 이렇게 해야 배포 시 색상이 사라지지 않습니다.
+  const getThemeStyles = () => {
+    if (tab === 'stopwatch') {
+      return {
+        bgLight: 'bg-indigo-50',
+        bgDark: 'dark:bg-indigo-950/30',
+        textMain: 'text-indigo-500 dark:text-indigo-400',
+        btnMain: 'bg-indigo-500 hover:bg-indigo-600 shadow-indigo-200',
+        modeBtnActive: 'bg-indigo-500 text-white border-indigo-500 shadow-sm',
+      };
+    }
+
+    if (timerMode === 'shortBreak' || timerMode === 'longBreak') {
+      return {
+        bgLight: 'bg-emerald-50',
+        bgDark: 'dark:bg-emerald-950/30',
+        textMain: 'text-emerald-500 dark:text-emerald-400',
+        btnMain: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200',
+        modeBtnActive: 'bg-emerald-500 text-white border-emerald-500 shadow-sm',
+      };
+    }
+
+    // 기본 (집중 모드)
+    return {
+      bgLight: 'bg-rose-50',
+      bgDark: 'dark:bg-rose-950/30',
+      textMain: 'text-rose-500 dark:text-rose-400',
+      btnMain: 'bg-rose-500 hover:bg-rose-600 shadow-rose-200',
+      modeBtnActive: 'bg-rose-500 text-white border-rose-500 shadow-sm',
+    };
   };
 
-  const color = getThemeColor();
-  const bgLight = `bg-${color}-50`;
-  const bgDark = `dark:bg-${color}-950/30`;
-  const textMain = `text-${color}-500 dark:text-${color}-400`;
-  const btnMain = `bg-${color}-500 hover:bg-${color}-600 shadow-${color}-200`;
+  const theme = getThemeStyles();
 
   const modeBtnBase =
     'px-5 py-2 rounded-full text-sm font-bold border-2 transition-all';
-  const modeBtnActive = `bg-${color}-500 text-white border-${color}-500 shadow-sm`;
   const modeBtnInactive =
     'text-gray-400 border-transparent hover:bg-black/5 dark:hover:bg-white/5';
 
@@ -302,7 +320,6 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
 
   return (
     <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden transition-all duration-300">
-      {/* 상단 탭 */}
       <div className="flex p-1 bg-gray-100 dark:bg-slate-900/50 m-2 rounded-2xl">
         <button
           onClick={() => setTab('timer')}
@@ -327,19 +344,17 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
       </div>
 
       <div
-        className={`px-10 py-6 flex flex-col items-center justify-center min-h-[360px] transition-colors duration-500 ${bgLight} ${bgDark}`}
+        className={`px-10 py-6 flex flex-col items-center justify-center min-h-[360px] transition-colors duration-500 ${theme.bgLight} ${theme.bgDark}`}
       >
         {!isLoaded ? (
           <div className="text-gray-400 animate-pulse">설정 불러오는 중...</div>
         ) : tab === 'timer' ? (
-          // --- 🍅 뽀모도로 UI ---
           <div className="text-center animate-fade-in w-full">
-            {/* 모드 버튼 */}
             <div className="flex justify-center gap-2 mb-6">
               <button
                 onClick={() => changeTimerMode('focus')}
                 className={`${modeBtnBase} ${
-                  timerMode === 'focus' ? modeBtnActive : modeBtnInactive
+                  timerMode === 'focus' ? theme.modeBtnActive : modeBtnInactive
                 }`}
               >
                 뽀모도로
@@ -347,7 +362,9 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
               <button
                 onClick={() => changeTimerMode('shortBreak')}
                 className={`${modeBtnBase} ${
-                  timerMode === 'shortBreak' ? modeBtnActive : modeBtnInactive
+                  timerMode === 'shortBreak'
+                    ? theme.modeBtnActive
+                    : modeBtnInactive
                 }`}
               >
                 짧은 휴식
@@ -355,22 +372,22 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
               <button
                 onClick={() => changeTimerMode('longBreak')}
                 className={`${modeBtnBase} ${
-                  timerMode === 'longBreak' ? modeBtnActive : modeBtnInactive
+                  timerMode === 'longBreak'
+                    ? theme.modeBtnActive
+                    : modeBtnInactive
                 }`}
               >
                 긴 휴식
               </button>
             </div>
 
-            {/* 타이머 숫자 */}
             <div
-              className={`text-7xl sm:text-8xl font-bold mb-4 font-mono tracking-tighter transition-colors ${textMain}`}
+              className={`text-7xl sm:text-8xl font-bold mb-4 font-mono tracking-tighter transition-colors ${theme.textMain}`}
             >
               {formatTime(timeLeft)}
             </div>
 
-            {/* ✨ 커스텀 프리셋 버튼들 (여기에 렌더링!) */}
-            <div className="flex flex-wrap gap-2 justify-center mb-8">
+            <div className="flex flex-wrap gap-2 justify-center mb-6">
               {settings.presets &&
                 settings.presets.map((preset) => (
                   <button
@@ -383,23 +400,20 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
                 ))}
             </div>
 
-            {/* 사이클 표시 */}
             {timerMode === 'focus' && (
               <div className="text-sm font-bold text-gray-400 dark:text-gray-500 mb-6 opacity-90 tracking-wider">
                 사이클 {cycleCount} / {settings.longBreakInterval}
               </div>
             )}
 
-            {/* 시작 버튼 */}
             <div className="flex justify-center gap-4">
               <button
                 onClick={toggleTimer}
-                className={`px-10 py-4 rounded-2xl font-bold text-lg text-white transition-all active:scale-95 shadow-lg ${btnMain} dark:shadow-none w-40`}
+                className={`px-10 py-4 rounded-2xl font-bold text-lg text-white transition-all active:scale-95 shadow-lg ${theme.btnMain} dark:shadow-none w-40`}
               >
                 {isRunning ? '일시정지' : '시작'}
               </button>
 
-              {/* 초기화 버튼 */}
               {!isRunning && showReset && (
                 <button
                   onClick={resetTimerManual}
@@ -424,20 +438,22 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
             </div>
           </div>
         ) : (
-          // --- ⏱️ 스톱워치 UI ---
           <div className="text-center animate-fade-in w-full">
             <div className="mb-6 text-sm font-bold text-indigo-400 uppercase tracking-widest">
               스톱워치
             </div>
 
-            <div className="text-7xl sm:text-8xl font-bold mb-10 font-mono tracking-tighter text-indigo-500 dark:text-indigo-400">
+            {/* ✨ 스톱워치 색상도 theme 객체에서 가져옴 (indigo) */}
+            <div
+              className={`text-7xl sm:text-8xl font-bold mb-10 font-mono tracking-tighter ${theme.textMain}`}
+            >
               {formatTime(stopwatchTime)}
             </div>
 
             <div className="flex gap-4 justify-center items-center">
               <button
                 onClick={toggleStopwatch}
-                className="px-10 py-4 rounded-2xl font-bold text-lg text-white bg-indigo-500 hover:bg-indigo-600 shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95 w-40"
+                className={`px-10 py-4 rounded-2xl font-bold text-lg text-white transition-all active:scale-95 w-40 ${theme.btnMain} dark:shadow-none`}
               >
                 {isStopwatchRunning ? '일시정지' : '시작'}
               </button>
