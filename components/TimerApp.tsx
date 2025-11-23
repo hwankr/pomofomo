@@ -100,8 +100,23 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
     }
   };
 
-  const saveRecord = async (recordMode: string, duration: number) => {
-    if (duration < 10) return;
+  // ✨ [핵심 로직 수정] 시간 기록 함수
+  // rawSeconds: 실제 흐른 초 (예: 110초)
+  const saveRecord = async (recordMode: string, rawSeconds: number) => {
+    // 1. 분 단위 계산 (내림 처리) -> 110초면 1분
+    const minutes = Math.floor(rawSeconds / 60);
+
+    // 2. 1분 미만이면 저장 안 함 (0분)
+    if (minutes < 1) {
+      // 너무 짧으면 로그만 남기고 종료 (사용자에게 알림은 안 띄움, 귀찮으니까)
+      console.log('1분 미만이라 기록되지 않음');
+      return;
+    }
+
+    // 3. 저장할 시간은 다시 초 단위로 환산 (DB가 초 단위니까)
+    // 1분 -> 60초 저장 (50초는 버림)
+    const durationToSave = minutes * 60;
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -120,11 +135,12 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
     try {
       const { error } = await supabase.from('study_sessions').insert({
         mode: recordMode,
-        duration: duration,
+        duration: durationToSave, // ✨ 버림 처리된 시간 저장
         user_id: user.id,
       });
       if (error) throw error;
-      toast.success('저장 완료!', { id: toastId });
+      // 몇 분 저장됐는지 알려주면 더 좋음
+      toast.success(`${minutes}분 기록 저장 완료!`, { id: toastId });
     } catch (e) {
       toast.error('저장 실패', { id: toastId });
     } finally {
@@ -132,6 +148,27 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
     }
   };
 
+  // ✨ [추가됨] 뽀모도로 중도 포기 시, 한 만큼 저장하는 함수
+  const savePartialProgress = () => {
+    // 전체 시간 - 남은 시간 = 공부한 시간
+    const fullTime =
+      timerMode === 'focus'
+        ? settings.pomoTime * 60
+        : timerMode === 'shortBreak'
+        ? settings.shortBreak * 60
+        : settings.longBreak * 60;
+
+    const elapsed = fullTime - timeLeft;
+
+    // 공부한 시간이 있고, 완료된 상태(0초)가 아니라면 저장 시도
+    if (elapsed > 0 && timeLeft > 0) {
+      const type = timerMode === 'focus' ? 'pomo' : 'break';
+      // 여기서 saveRecord를 호출하면 "1분 미만 버림" 로직이 자동 적용됨
+      saveRecord(type, elapsed);
+    }
+  };
+
+  // 🍅 타이머 완료 로직
   useEffect(() => {
     if (timeLeft === 0 && isRunning) {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -145,6 +182,7 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
           ? settings.shortBreak
           : settings.longBreak;
 
+      // 완료 시에는 전체 시간 저장
       saveRecord(timerMode === 'focus' ? 'pomo' : 'break', duration * 60);
 
       if (timerMode === 'focus') {
@@ -193,6 +231,9 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
   };
 
   const changeTimerMode = (mode: 'focus' | 'shortBreak' | 'longBreak') => {
+    // 모드 변경 시에도 하던 거 저장 (예: 집중하다가 휴식 누름)
+    savePartialProgress();
+
     if (isRunning) {
       if (timerRef.current) clearInterval(timerRef.current);
       setIsRunning(false);
@@ -211,6 +252,10 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
       });
       return;
     }
+
+    // 프리셋 눌러서 시간 바뀔 때도 기존 시간 저장할지?
+    // 보통 멈춰있는 상태에서 바꾸는 거라 저장은 생략하거나, 필요하면 savePartialProgress() 추가
+    // 여기선 멈춰있을 때만 동작하므로 패스.
 
     setTimerMode('focus');
     setTimeLeft(minutes * 60);
@@ -253,7 +298,11 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
     if (stopwatchRef.current) clearInterval(stopwatchRef.current);
   };
 
+  // ✨ 수동 초기화 (중도 포기)
   const resetTimerManual = () => {
+    // 초기화 버튼 누르면 지금까지 한 거 저장!
+    savePartialProgress();
+
     setIsRunning(false);
     if (timerRef.current) clearInterval(timerRef.current);
 
@@ -269,8 +318,6 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
     };
   }, []);
 
-  // ✨ [수정됨] 색상을 변수 조립이 아니라 '완전한 문자열'로 반환하도록 변경
-  // 이렇게 해야 배포 시 색상이 사라지지 않습니다.
   const getThemeStyles = () => {
     if (tab === 'stopwatch') {
       return {
@@ -292,7 +339,6 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
       };
     }
 
-    // 기본 (집중 모드)
     return {
       bgLight: 'bg-rose-50',
       bgDark: 'dark:bg-rose-950/30',
@@ -443,17 +489,14 @@ export default function TimerApp({ settingsUpdated }: TimerAppProps) {
               스톱워치
             </div>
 
-            {/* ✨ 스톱워치 색상도 theme 객체에서 가져옴 (indigo) */}
-            <div
-              className={`text-7xl sm:text-8xl font-bold mb-10 font-mono tracking-tighter ${theme.textMain}`}
-            >
+            <div className="text-7xl sm:text-8xl font-bold mb-10 font-mono tracking-tighter text-indigo-500 dark:text-indigo-400">
               {formatTime(stopwatchTime)}
             </div>
 
             <div className="flex gap-4 justify-center items-center">
               <button
                 onClick={toggleStopwatch}
-                className={`px-10 py-4 rounded-2xl font-bold text-lg text-white transition-all active:scale-95 w-40 ${theme.btnMain} dark:shadow-none`}
+                className="px-10 py-4 rounded-2xl font-bold text-lg text-white bg-indigo-500 hover:bg-indigo-600 shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95 w-40"
               >
                 {isStopwatchRunning ? '일시정지' : '시작'}
               </button>
