@@ -4,13 +4,15 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import TimerApp from '@/components/TimerApp';
 import HistoryList from '@/components/HistoryList';
-import LoginModal from '@/components/LoginModal'; // 👈 모달 불러오기
+import LoginModal from '@/components/LoginModal';
+import ReportModal from '@/components/ReportModal'; // 👈 리포트 모달 추가
 import { Toaster } from 'react-hot-toast';
 
 export default function Home() {
   const [session, setSession] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false); // 모달 열림/닫힘 상태
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false); // 👈 리포트 모달 상태 추가
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -44,8 +46,6 @@ export default function Home() {
     );
   }
 
-  // ✨ 버튼 스타일 변경 (붉은색 -> 투명한 흰색)
-  // bg-white/10: 흰색인데 투명도 10%
   const headerBtnStyle =
     'flex items-center gap-2 px-3 py-2 rounded bg-white/10 hover:bg-white/20 text-white/90 text-sm font-medium transition-colors';
 
@@ -53,17 +53,27 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900 text-white p-4 overflow-y-auto">
       <Toaster position="top-center" reverseOrder={false} />
 
-      {/* ✨ 로그인 모달창 (상태에 따라 보여줌) */}
+      {/* 모달들 */}
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onGoogleLogin={handleGoogleLogin}
       />
 
+      {/* 리포트 모달 (여기 추가됨! ✨) */}
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+      />
+
       <div className="py-10 flex flex-col items-center w-full max-w-md relative">
         {/* --- 상단 헤더 --- */}
         <div className="w-full flex justify-end items-center gap-2 mb-8">
-          <button className={headerBtnStyle}>
+          {/* Report 버튼: 클릭 시 리포트 모달 오픈 */}
+          <button
+            onClick={() => setIsReportModalOpen(true)} // 👈 클릭 이벤트 연결
+            className={headerBtnStyle}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -121,7 +131,6 @@ export default function Home() {
               Sign Out
             </button>
           ) : (
-            // 비로그인 상태: 클릭하면 모달창 오픈
             <button
               onClick={() => setIsLoginModalOpen(true)}
               className={headerBtnStyle}
