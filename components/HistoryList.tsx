@@ -1,0 +1,170 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import toast from 'react-hot-toast';
+
+type StudySession = {
+  id: number;
+  mode: string;
+  duration: number;
+  created_at: string;
+};
+
+export default function HistoryList() {
+  const [history, setHistory] = useState<StudySession[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchHistory = async () => {
+    try {
+      setLoading(true);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('study_sessions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5); // ✨ 최근 5개만 가져오기
+
+      if (error) throw error;
+      if (data) setHistory(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✨ 삭제 함수 추가
+  const handleDelete = async (id: number) => {
+    // 사용자에게 확인 (실수 방지)
+    if (!confirm('이 기록을 삭제하시겠습니까?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('study_sessions')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // 삭제 성공 시 화면 목록에서도 바로 제거 (새로고침 없이)
+      setHistory((prev) => prev.filter((item) => item.id !== id));
+      toast.success('기록이 삭제되었습니다.');
+    } catch (error) {
+      toast.error('삭제 실패');
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  const formatDuration = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}분 ${s}초`;
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${date
+      .getMinutes()
+      .toString()
+      .padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="w-full max-w-md mt-4">
+      <div className="flex justify-between items-center mb-3 px-2">
+        <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          Recent Activity
+        </h3>
+        <button
+          onClick={fetchHistory}
+          className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+        >
+          새로고침
+        </button>
+      </div>
+
+      <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+        {loading ? (
+          <div className="text-center text-gray-400 py-8 text-sm">
+            로딩 중...
+          </div>
+        ) : history.length === 0 ? (
+          <div className="text-center text-gray-400 py-8 text-sm">
+            아직 기록이 없습니다.
+          </div>
+        ) : (
+          <ul className="divide-y divide-gray-100 dark:divide-slate-700">
+            {history.map((item) => (
+              <li
+                key={item.id}
+                className="flex justify-between items-center p-4 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
+                      item.mode === 'pomo'
+                        ? 'bg-rose-100 text-rose-500 dark:bg-rose-900/30'
+                        : 'bg-indigo-100 text-indigo-500 dark:bg-indigo-900/30'
+                    }`}
+                  >
+                    {item.mode === 'pomo' ? '🍅' : '⏱️'}
+                  </div>
+                  <div>
+                    <div className="font-bold text-gray-700 dark:text-gray-200 text-sm">
+                      {item.mode === 'pomo' ? '뽀모도로' : '스톱워치'}
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      {formatDate(item.created_at)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="font-mono font-bold text-gray-800 dark:text-white">
+                    {formatDuration(item.duration)}
+                  </div>
+
+                  {/* ✨ 삭제 버튼 (마우스 올렸을 때만 선명하게 보임) */}
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                    title="삭제"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                      className="w-5 h-5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456-3.71a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
