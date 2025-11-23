@@ -1,24 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import TimerApp from '@/components/TimerApp';
 import HistoryList from '@/components/HistoryList';
 import LoginModal from '@/components/LoginModal';
 import ReportModal from '@/components/ReportModal';
+import SettingsModal from '@/components/SettingsModal';
 import { Toaster } from 'react-hot-toast';
 
 export default function Home() {
   const [session, setSession] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // 모달 상태
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false); // 프로필 메뉴 토글용
 
-  // Theme state management
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [settingsUpdateTrigger, setSettingsUpdateTrigger] = useState(0);
 
   useEffect(() => {
-    // Auth state subscription
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setIsLoading(false);
@@ -30,7 +34,6 @@ export default function Home() {
       setSession(session);
     });
 
-    // System preference check
     if (
       window.matchMedia &&
       window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -50,11 +53,11 @@ export default function Home() {
 
   if (isLoading) return null;
 
-  // Common button styles
+  // 버튼 스타일 (공통)
   const headerBtnStyle = `
-    flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
-    bg-white/50 text-gray-600 hover:bg-white hover:text-gray-900 border border-gray-200 shadow-sm
-    dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/20 dark:hover:text-white dark:border-white/10
+    flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold transition-all duration-200
+    bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-900
+    dark:bg-slate-800 dark:text-gray-400 dark:hover:bg-slate-700 dark:hover:text-white
   `;
 
   return (
@@ -67,65 +70,39 @@ export default function Home() {
           onClose={() => setIsLoginModalOpen(false)}
           onGoogleLogin={handleGoogleLogin}
         />
-
         <ReportModal
           isOpen={isReportModalOpen}
           onClose={() => setIsReportModalOpen(false)}
         />
+        <SettingsModal
+          isOpen={isSettingsModalOpen}
+          onClose={() => setIsSettingsModalOpen(false)}
+          onSave={() => setSettingsUpdateTrigger((prev) => prev + 1)}
+        />
 
-        <div className="py-8 flex flex-col items-center w-full max-w-md relative">
-          {/* Header Section */}
-          <div className="w-full flex justify-between items-center mb-8 px-1">
-            {/* Logo */}
-            <div className="flex items-center gap-2">
+        {/* 전체 레이아웃 폭을 넓혀서 여유를 줌 */}
+        <div className="py-8 flex flex-col items-center w-full max-w-lg relative">
+          {/* --- 헤더 (간격 조정됨) --- */}
+          <div className="w-full flex justify-between items-center mb-12 px-2">
+            {/* 왼쪽: 로고 */}
+            <div className="flex items-center gap-2 select-none">
               <span className="text-2xl">🍅</span>
               <h1 className="text-xl font-extrabold text-gray-800 dark:text-white tracking-tight">
                 Pomofomo
               </h1>
             </div>
 
-            {/* Navigation & Actions */}
-            <div className="flex items-center gap-2">
-              {/* Theme Toggle */}
+            {/* 오른쪽: 버튼 그룹 */}
+            <div className="flex items-center gap-3">
+              {/* 테마 */}
               <button
                 onClick={() => setIsDarkMode(!isDarkMode)}
-                className={headerBtnStyle}
-                aria-label="Toggle Theme"
+                className={`${headerBtnStyle} px-3`}
               >
-                {isDarkMode ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="w-4 h-4 text-yellow-300"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="w-4 h-4"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"
-                    />
-                  </svg>
-                )}
+                {isDarkMode ? '☀️' : '🌙'}
               </button>
 
-              {/* Report Button */}
+              {/* 리포트 */}
               <button
                 onClick={() => setIsReportModalOpen(true)}
                 className={headerBtnStyle}
@@ -134,7 +111,7 @@ export default function Home() {
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
-                  strokeWidth={1.5}
+                  strokeWidth={2}
                   stroke="currentColor"
                   className="w-4 h-4"
                 >
@@ -152,18 +129,71 @@ export default function Home() {
                 <span className="hidden sm:inline">Report</span>
               </button>
 
-              {/* Auth Button */}
-              {session ? (
-                <button
-                  onClick={() => supabase.auth.signOut()}
-                  className={headerBtnStyle}
+              {/* 설정 */}
+              <button
+                onClick={() => setIsSettingsModalOpen(true)}
+                className={headerBtnStyle}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-4 h-4"
                 >
-                  Sign Out
-                </button>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 001.014-5.395m0-3.46c.253-.962.584-1.892.985-2.783.247-.55.06-1.21-.463-1.511l-.657-.38c-.551-.318-1.26-.117-1.527.461a20.845 20.845 0 01-1.44 4.282m3.102-.069a18.03 18.03 0 01.59 4.59c0 1.586-.205 3.124-.59 4.59m0-9.18a23.848 23.848 0 01-8.835-2.535"
+                  />
+                </svg>
+                <span className="hidden sm:inline">Setting</span>
+              </button>
+
+              {/* ✨ 프로필 / 로그인 버튼 수정 ✨ */}
+              {session ? (
+                <div className="relative">
+                  {/* 프로필 사진 버튼 */}
+                  <button
+                    onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                    className="w-9 h-9 rounded-lg overflow-hidden border-2 border-white dark:border-slate-600 shadow-sm hover:opacity-80 transition-opacity"
+                  >
+                    <img
+                      src={
+                        session.user.user_metadata.avatar_url ||
+                        'https://www.svgrepo.com/show/446532/avatar.svg'
+                      }
+                      alt="User"
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+
+                  {/* 드롭다운 메뉴 (클릭하면 나옴) */}
+                  {isProfileMenuOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-10 cursor-default"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                      ></div>
+                      <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 z-20 overflow-hidden py-1 animate-fade-in">
+                        <button
+                          onClick={() => {
+                            supabase.auth.signOut();
+                            setIsProfileMenuOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium transition-colors"
+                        >
+                          Log out
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               ) : (
                 <button
                   onClick={() => setIsLoginModalOpen(true)}
-                  className={`${headerBtnStyle} bg-gray-900 text-white hover:bg-gray-800 border-transparent dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200`}
+                  className={`${headerBtnStyle} bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200`}
                 >
                   Sign In
                 </button>
@@ -171,17 +201,9 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Main Content */}
-          <div className="w-full flex flex-col items-center gap-6 animate-fade-in">
-            <TimerApp />
-
-            {session ? (
-              <HistoryList />
-            ) : (
-              <div className="text-center text-gray-400 text-xs mt-2 dark:text-gray-500">
-                로그인 시 학습 기록이 저장됩니다.
-              </div>
-            )}
+          <div className="w-full flex flex-col items-center gap-8 animate-fade-in">
+            <TimerApp settingsUpdated={settingsUpdateTrigger} />
+            {session ? <HistoryList /> : null}
           </div>
         </div>
       </main>
