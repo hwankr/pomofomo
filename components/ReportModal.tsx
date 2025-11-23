@@ -17,7 +17,6 @@ import {
   eachDayOfInterval,
   format,
   isSameDay,
-  subDays,
 } from 'date-fns';
 
 interface ReportModalProps {
@@ -27,11 +26,10 @@ interface ReportModalProps {
 
 export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
   const [weeklyData, setWeeklyData] = useState<any[]>([]);
-  const [totalFocusTime, setTotalFocusTime] = useState(0); // 총 누적 시간
-  const [todayFocusTime, setTodayFocusTime] = useState(0); // 오늘 시간
+  const [totalFocusTime, setTotalFocusTime] = useState(0);
+  const [todayFocusTime, setTodayFocusTime] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // 초(Seconds)를 "00h 00m" 형태로 변환
   const formatDuration = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -46,11 +44,9 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
     if (!user) return;
 
     const today = new Date();
-    // 이번 주 월요일 ~ 일요일 구하기
-    const start = startOfWeek(today, { weekStartsOn: 1 }); // 월요일 시작
+    const start = startOfWeek(today, { weekStartsOn: 1 });
     const end = endOfWeek(today, { weekStartsOn: 1 });
 
-    // 1. 이번 주 데이터 가져오기
     const { data: weeklySessions } = await supabase
       .from('study_sessions')
       .select('duration, created_at')
@@ -58,38 +54,30 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
       .gte('created_at', start.toISOString())
       .lte('created_at', end.toISOString());
 
-    // 2. 전체 누적 데이터 가져오기 (총 시간용)
     const { data: allSessions } = await supabase
       .from('study_sessions')
       .select('duration')
       .eq('user_id', user.id);
 
-    // --- 데이터 가공 ---
-
-    // A. 총 누적 시간 계산
     const totalSeconds =
       allSessions?.reduce((acc, curr) => acc + curr.duration, 0) || 0;
     setTotalFocusTime(totalSeconds);
 
-    // B. 오늘 시간 계산
     const todaySeconds =
       weeklySessions
         ?.filter((s) => isSameDay(new Date(s.created_at), today))
         .reduce((acc, curr) => acc + curr.duration, 0) || 0;
     setTodayFocusTime(todaySeconds);
 
-    // C. 그래프용 데이터 만들기 (월~일 빈 통 채우기)
     const days = eachDayOfInterval({ start, end });
     const chartData = days.map((day) => {
-      // 해당 날짜의 기록 다 더하기
       const daySeconds =
         weeklySessions
           ?.filter((s) => isSameDay(new Date(s.created_at), day))
           .reduce((acc, curr) => acc + curr.duration, 0) || 0;
 
-      // 그래프에는 '시간(Hour)' 단위로 표시 (소수점 1자리)
       return {
-        name: format(day, 'EEE'), // Mon, Tue...
+        name: format(day, 'EEE'),
         hours: parseFloat((daySeconds / 3600).toFixed(1)),
         fullDate: format(day, 'yyyy-MM-dd'),
       };
@@ -108,13 +96,16 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in p-4">
-      {/* 모달 박스 */}
-      <div className="bg-gray-900 border border-gray-700 text-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in p-4">
+      {/* ✨ 모달 디자인 수정 ✨
+        bg-white (라이트모드 배경) / dark:bg-slate-800 (다크모드 배경)
+        text-gray-900 (라이트모드 글씨) / dark:text-white (다크모드 글씨)
+      */}
+      <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] transition-colors duration-300">
         {/* 헤더 */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-800">
-          <div className="flex items-center gap-2">
-            <span className="bg-red-500/20 text-red-400 p-2 rounded-lg">
+        <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-slate-700">
+          <div className="flex items-center gap-3">
+            <span className="bg-rose-100 text-rose-500 dark:bg-rose-900/30 dark:text-rose-400 p-2 rounded-xl">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -130,11 +121,13 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
                 />
               </svg>
             </span>
-            <h2 className="text-xl font-bold">학습 리포트</h2>
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+              Weekly Report
+            </h2>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -155,30 +148,30 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
 
         <div className="p-6 overflow-y-auto">
           {loading ? (
-            <div className="h-60 flex items-center justify-center text-gray-500 animate-pulse">
-              데이터 분석 중...
+            <div className="h-60 flex items-center justify-center text-gray-400 animate-pulse">
+              Analyzing data...
             </div>
           ) : (
             <>
               {/* 1. 요약 카드 섹션 */}
               <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className="bg-gray-800/50 p-5 rounded-xl border border-gray-700">
+                <div className="bg-gray-50 dark:bg-slate-700/50 p-5 rounded-2xl border border-gray-100 dark:border-slate-600">
                   <div className="text-gray-400 text-xs uppercase font-bold tracking-wider mb-2">
                     Total Hours
                   </div>
-                  <div className="text-3xl font-mono font-bold text-white">
+                  <div className="text-3xl font-mono font-bold text-gray-800 dark:text-white">
                     {Math.floor(totalFocusTime / 3600)}
-                    <span className="text-lg text-gray-500 ml-1">h</span>
+                    <span className="text-lg text-gray-400 ml-1">h</span>
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
-                    총 누적 집중 시간
+                    누적 집중 시간
                   </div>
                 </div>
-                <div className="bg-gray-800/50 p-5 rounded-xl border border-gray-700">
+                <div className="bg-gray-50 dark:bg-slate-700/50 p-5 rounded-2xl border border-gray-100 dark:border-slate-600">
                   <div className="text-gray-400 text-xs uppercase font-bold tracking-wider mb-2">
                     Today
                   </div>
-                  <div className="text-3xl font-mono font-bold text-red-400">
+                  <div className="text-3xl font-mono font-bold text-rose-500 dark:text-rose-400">
                     {formatDuration(todayFocusTime)}
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
@@ -188,12 +181,9 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
               </div>
 
               {/* 2. 그래프 섹션 */}
-              <div className="bg-gray-800/30 p-6 rounded-xl border border-gray-700">
-                <h3 className="text-sm font-bold text-gray-300 mb-6 flex items-center gap-2">
-                  📅 이번 주 학습 통계{' '}
-                  <span className="text-xs font-normal text-gray-500">
-                    (단위: 시간)
-                  </span>
+              <div className="bg-gray-50 dark:bg-slate-700/30 p-6 rounded-2xl border border-gray-100 dark:border-slate-600">
+                <h3 className="text-sm font-bold text-gray-600 dark:text-gray-300 mb-6 flex items-center gap-2">
+                  📅 이번 주 통계
                 </h3>
 
                 <div className="h-64 w-full">
@@ -201,24 +191,27 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
                     <BarChart data={weeklyData}>
                       <XAxis
                         dataKey="name"
-                        stroke="#6b7280"
+                        stroke="#9ca3af" // 회색 (라이트/다크 모두 잘 보임)
                         fontSize={12}
                         tickLine={false}
                         axisLine={false}
                       />
                       <YAxis
-                        stroke="#6b7280"
+                        stroke="#9ca3af"
                         fontSize={12}
                         tickLine={false}
                         axisLine={false}
                         tickFormatter={(value) => `${value}h`}
                       />
                       <Tooltip
-                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                        cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                         contentStyle={{
                           backgroundColor: '#1f2937',
                           borderColor: '#374151',
                           color: '#fff',
+                          borderRadius: '8px',
+                          border: 'none',
+                          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
                         }}
                         formatter={(value: number) => [
                           `${value} 시간`,
@@ -229,7 +222,12 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
                         {weeklyData.map((entry, index) => (
                           <Cell
                             key={`cell-${index}`}
-                            fill={entry.hours > 0 ? '#f87171' : '#374151'}
+                            // 값이 있으면 빨간색, 없으면 연한 회색(라이트) or 진한 회색(다크)
+                            className={
+                              entry.hours > 0
+                                ? 'fill-rose-400 dark:fill-rose-500'
+                                : 'fill-gray-200 dark:fill-slate-600'
+                            }
                           />
                         ))}
                       </Bar>

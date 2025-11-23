@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 
+// Helper for time formatting (HH:MM:SS or MM:SS)
 const formatTime = (seconds: number) => {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -21,6 +22,7 @@ export default function TimerApp() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // Timer states
   const [pomoTime, setPomoTime] = useState(25 * 60);
   const [initialPomoTime, setInitialPomoTime] = useState(25 * 60);
   const [isPomoRunning, setIsPomoRunning] = useState(false);
@@ -30,9 +32,7 @@ export default function TimerApp() {
   const [isStopwatchRunning, setIsStopwatchRunning] = useState(false);
   const stopwatchRef = useRef<NodeJS.Timeout | null>(null);
 
-  // ... (기존 로직 부분은 동일하지만, 스타일 적용을 위해 전체를 덮어쓰세요) ...
-
-  // --- ☁️ 로드 & 동기화 ---
+  // Initialize: Load state from Supabase
   useEffect(() => {
     const loadServerState = async () => {
       const {
@@ -58,6 +58,7 @@ export default function TimerApp() {
     loadServerState();
   }, []);
 
+  // Sync state to Supabase
   const syncStateToServer = async (
     currentMode: string,
     pTime: number,
@@ -84,6 +85,7 @@ export default function TimerApp() {
     }
   };
 
+  // Save session record
   const saveRecord = async (recordMode: string, duration: number) => {
     if (duration < 10) return;
     const {
@@ -111,7 +113,7 @@ export default function TimerApp() {
     }
   };
 
-  // --- 🍅 로직 ---
+  // Pomodoro Logic
   useEffect(() => {
     if (pomoTime === 0 && isPomoRunning) {
       if (pomoRef.current) clearInterval(pomoRef.current);
@@ -150,7 +152,7 @@ export default function TimerApp() {
     setPomoDuration(25);
   };
 
-  // --- ⏱️ 로직 ---
+  // Stopwatch Logic
   const toggleStopwatch = () => {
     if (isStopwatchRunning) {
       if (stopwatchRef.current) clearInterval(stopwatchRef.current);
@@ -193,9 +195,8 @@ export default function TimerApp() {
     };
   }, []);
 
-  // --- ✨ 디자인 테마 변수 ---
-  // 모드에 따라 색상 자동 변경
-  const themeColor = mode === 'pomo' ? 'rose' : 'indigo'; // 빨강 vs 파랑
+  // Theme constants
+  const themeColor = mode === 'pomo' ? 'rose' : 'indigo';
   const bgLight = mode === 'pomo' ? 'bg-rose-50' : 'bg-indigo-50';
   const bgDark =
     mode === 'pomo' ? 'dark:bg-rose-950/30' : 'dark:bg-indigo-950/30';
@@ -210,7 +211,7 @@ export default function TimerApp() {
 
   return (
     <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-3xl shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-slate-700 overflow-hidden transition-all duration-300">
-      {/* 상단 탭 (더 깔끔하게) */}
+      {/* Mode Tabs */}
       <div className="flex p-1 bg-gray-100 dark:bg-slate-900/50 m-2 rounded-2xl">
         <button
           onClick={() => changeMode('pomo')}
@@ -239,12 +240,11 @@ export default function TimerApp() {
       >
         {!isLoaded ? (
           <div className="text-gray-400 animate-pulse text-sm font-medium">
-            동기화 중...
+            Loading...
           </div>
         ) : mode === 'pomo' ? (
-          // --- 🍅 뽀모도로 UI ---
+          // Pomodoro UI
           <div className="text-center animate-fade-in w-full">
-            {/* 상태 뱃지 */}
             <div className="mb-6 flex justify-center">
               <span
                 className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
@@ -257,14 +257,12 @@ export default function TimerApp() {
               </span>
             </div>
 
-            {/* 시간 타이머 (큰 숫자) */}
             <div
               className={`text-7xl sm:text-8xl font-black mb-8 font-mono tracking-tighter transition-colors ${textMain}`}
             >
               {formatTime(pomoTime)}
             </div>
 
-            {/* 시간 설정 칩 (더 모던하게) */}
             <div className="flex gap-2 justify-center mb-8">
               {[25, 5, 0.1].map((min) => (
                 <button
@@ -277,7 +275,6 @@ export default function TimerApp() {
               ))}
             </div>
 
-            {/* 메인 버튼 */}
             <div className="flex gap-3 justify-center items-center">
               <button
                 onClick={togglePomo}
@@ -314,7 +311,7 @@ export default function TimerApp() {
             </div>
           </div>
         ) : (
-          // --- ⏱️ 스톱워치 UI ---
+          // Stopwatch UI
           <div className="text-center animate-fade-in w-full">
             <div className="mb-6 flex justify-center">
               <span

@@ -14,10 +14,11 @@ export default function Home() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
-  // 테마 상태 (기본값: 라이트모드 false)
+  // Theme state management
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
+    // Auth state subscription
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setIsLoading(false);
@@ -29,7 +30,7 @@ export default function Home() {
       setSession(session);
     });
 
-    // 사용자의 시스템 설정을 확인해서 다크모드 자동 적용 (선택사항)
+    // System preference check
     if (
       window.matchMedia &&
       window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -47,9 +48,9 @@ export default function Home() {
     });
   };
 
-  if (isLoading) return null; // 깜빡임 방지용 빈 화면
+  if (isLoading) return null;
 
-  // 공통 버튼 스타일 (모드에 따라 자동 변신)
+  // Common button styles
   const headerBtnStyle = `
     flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
     bg-white/50 text-gray-600 hover:bg-white hover:text-gray-900 border border-gray-200 shadow-sm
@@ -57,9 +58,8 @@ export default function Home() {
   `;
 
   return (
-    // ⭐️ 최상위 div에 'dark' 클래스를 넣으면 자식들이 다크모드로 변신함
     <div className={isDarkMode ? 'dark' : ''}>
-      <main className="flex min-h-screen flex-col items-center bg-[#f8f9fa] dark:bg-[#0f172a] transition-colors duration-300 p-4 overflow-y-auto font-sans">
+      <main className="flex min-h-screen flex-col items-center bg-[#f8f9fa] dark:bg-[#0f172a] transition-colors duration-300 p-4 overflow-y-auto font-sans text-gray-900 dark:text-gray-100">
         <Toaster position="top-center" reverseOrder={false} />
 
         <LoginModal
@@ -74,9 +74,9 @@ export default function Home() {
         />
 
         <div className="py-8 flex flex-col items-center w-full max-w-md relative">
-          {/* --- 상단 헤더 --- */}
+          {/* Header Section */}
           <div className="w-full flex justify-between items-center mb-8 px-1">
-            {/* 왼쪽: 로고 (텍스트) */}
+            {/* Logo */}
             <div className="flex items-center gap-2">
               <span className="text-2xl">🍅</span>
               <h1 className="text-xl font-extrabold text-gray-800 dark:text-white tracking-tight">
@@ -84,9 +84,9 @@ export default function Home() {
               </h1>
             </div>
 
-            {/* 오른쪽: 버튼 그룹 */}
+            {/* Navigation & Actions */}
             <div className="flex items-center gap-2">
-              {/* 🌙 테마 전환 버튼 */}
+              {/* Theme Toggle */}
               <button
                 onClick={() => setIsDarkMode(!isDarkMode)}
                 className={headerBtnStyle}
@@ -125,7 +125,7 @@ export default function Home() {
                 )}
               </button>
 
-              {/* 리포트 버튼 */}
+              {/* Report Button */}
               <button
                 onClick={() => setIsReportModalOpen(true)}
                 className={headerBtnStyle}
@@ -152,7 +152,7 @@ export default function Home() {
                 <span className="hidden sm:inline">Report</span>
               </button>
 
-              {/* 로그인/로그아웃 버튼 */}
+              {/* Auth Button */}
               {session ? (
                 <button
                   onClick={() => supabase.auth.signOut()}
@@ -171,6 +171,7 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Main Content */}
           <div className="w-full flex flex-col items-center gap-6 animate-fade-in">
             <TimerApp />
 
@@ -178,7 +179,7 @@ export default function Home() {
               <HistoryList />
             ) : (
               <div className="text-center text-gray-400 text-xs mt-2 dark:text-gray-500">
-                로그인하면 공부 기록이 안전하게 저장됩니다.
+                로그인 시 학습 기록이 저장됩니다.
               </div>
             )}
           </div>
