@@ -11,7 +11,13 @@ type StudySession = {
   created_at: string;
 };
 
-export default function HistoryList() {
+// ✨ [추가] updateTrigger를 선택적 prop으로 정의
+interface HistoryListProps {
+  updateTrigger?: number;
+}
+
+// ✨ props 구조 분해 할당 (기본값 0)
+export default function HistoryList({ updateTrigger = 0 }: HistoryListProps) {
   const [history, setHistory] = useState<StudySession[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,7 +38,7 @@ export default function HistoryList() {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(5); // ✨ 최근 5개만 가져오기
+        .limit(5);
 
       if (error) throw error;
       if (data) setHistory(data);
@@ -43,9 +49,7 @@ export default function HistoryList() {
     }
   };
 
-  // ✨ 삭제 함수 추가
   const handleDelete = async (id: number) => {
-    // 사용자에게 확인 (실수 방지)
     if (!confirm('이 기록을 삭제하시겠습니까?')) return;
 
     try {
@@ -56,7 +60,6 @@ export default function HistoryList() {
 
       if (error) throw error;
 
-      // 삭제 성공 시 화면 목록에서도 바로 제거 (새로고침 없이)
       setHistory((prev) => prev.filter((item) => item.id !== id));
       toast.success('기록이 삭제되었습니다.');
     } catch (error) {
@@ -65,9 +68,10 @@ export default function HistoryList() {
     }
   };
 
+  // ✨ updateTrigger가 변경될 때마다 다시 로드
   useEffect(() => {
     fetchHistory();
-  }, []);
+  }, [updateTrigger]);
 
   const formatDuration = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -138,7 +142,6 @@ export default function HistoryList() {
                     {formatDuration(item.duration)}
                   </div>
 
-                  {/* ✨ 삭제 버튼 (마우스 올렸을 때만 선명하게 보임) */}
                   <button
                     onClick={() => handleDelete(item.id)}
                     className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"

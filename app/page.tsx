@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Session } from "@supabase/supabase-js";
+import { Session } from '@supabase/supabase-js';
 import Image from 'next/image';
 import TimerApp from '@/components/TimerApp';
 import HistoryList from '@/components/HistoryList';
@@ -23,6 +23,9 @@ export default function Home() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [settingsUpdateTrigger, setSettingsUpdateTrigger] = useState(0);
 
+  // ✨ [추가] 기록 목록 새로고침을 위한 트리거 상태
+  const [historyUpdateTrigger, setHistoryUpdateTrigger] = useState(0);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -39,7 +42,6 @@ export default function Home() {
       window.matchMedia &&
       window.matchMedia('(prefers-color-scheme: dark)').matches
     ) {
-      // ✅ setTimeout으로 감싸서 비동기로 처리
       setTimeout(() => setIsDarkMode(true), 0);
     }
 
@@ -55,7 +57,6 @@ export default function Home() {
 
   if (isLoading) return null;
 
-  // ✨ whitespace-nowrap 추가: 절대 줄바꿈 안 됨
   const headerBtnStyle = `
     flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold transition-all duration-200 whitespace-nowrap
     bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-900
@@ -125,7 +126,6 @@ export default function Home() {
                 <span className="hidden sm:inline">Report</span>
               </button>
 
-              {/* ✨ 아이콘 수정됨: 톱니바퀴(Gear) */}
               <button
                 onClick={() => setIsSettingsModalOpen(true)}
                 className={headerBtnStyle}
@@ -158,7 +158,6 @@ export default function Home() {
                     onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                     className="w-9 h-9 rounded-lg overflow-hidden border-2 border-white dark:border-slate-600 shadow-sm hover:opacity-80 transition-opacity"
                   >
-                    {/* ✅ <img> 태그를 <Image>로 교체 */}
                     <Image
                       src={
                         session.user.user_metadata.avatar_url ||
@@ -202,8 +201,16 @@ export default function Home() {
           </div>
 
           <div className="w-full flex flex-col items-center gap-8 animate-fade-in">
-            <TimerApp settingsUpdated={settingsUpdateTrigger} />
-            {session ? <HistoryList /> : null}
+            {/* ✨ TimerApp에 콜백 전달: 저장 완료 시 트리거 숫자를 증가시킴 */}
+            <TimerApp
+              settingsUpdated={settingsUpdateTrigger}
+              onRecordSaved={() => setHistoryUpdateTrigger((prev) => prev + 1)}
+            />
+
+            {/* ✨ HistoryList에 트리거 전달: 숫자가 바뀌면 새로고침 됨 */}
+            {session ? (
+              <HistoryList updateTrigger={historyUpdateTrigger} />
+            ) : null}
           </div>
         </div>
       </main>
