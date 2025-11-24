@@ -16,6 +16,18 @@ type Preset = {
   minutes: number;
 };
 
+type Settings = {
+  pomoTime: number;
+  shortBreak: number;
+  longBreak: number;
+  autoStartBreaks: boolean;
+  autoStartPomos: boolean;
+  longBreakInterval: number;
+  volume: number;
+  isMuted: boolean;
+  presets: Preset[];
+};
+
 const DEFAULT_SETTINGS = {
   pomoTime: 25,
   shortBreak: 5,
@@ -102,7 +114,7 @@ export default function SettingsModal({
     loadSettings();
   }, [isOpen]);
 
-  const saveToAll = async (newSettings: any) => {
+const saveToAll = async (newSettings: Settings) => { 
     localStorage.setItem('pomofomo_settings', JSON.stringify(newSettings));
     const {
       data: { user },

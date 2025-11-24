@@ -38,7 +38,8 @@ export default function Home() {
       window.matchMedia &&
       window.matchMedia('(prefers-color-scheme: dark)').matches
     ) {
-      setIsDarkMode(true);
+      // ✅ setTimeout으로 감싸서 비동기로 처리
+      setTimeout(() => setIsDarkMode(true), 0);
     }
 
     return () => subscription.unsubscribe();
