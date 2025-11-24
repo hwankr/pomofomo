@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import {
   BarChart,
@@ -31,8 +31,13 @@ interface ReportModalProps {
   onClose: () => void;
 }
 
+type ChartData = {
+  name: string;
+  hours: number;
+};
+
 export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
-  const [chartData, setChartData] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<ChartData[]>([]);
   const [totalFocusTime, setTotalFocusTime] = useState(0);
   const [todayFocusTime, setTodayFocusTime] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -46,7 +51,7 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
     return `${h}h ${m}m`;
   };
 
-  const fetchReportData = async () => {
+  const fetchReportData = useCallback(async () => {
     setLoading(true);
     const {
       data: { user },
@@ -142,14 +147,15 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
 
     setChartData(newChartData);
     setLoading(false);
-  };
+  }, [viewMode]);
 
   // 뷰 모드가 바뀌거나 창이 열릴 때 데이터 다시 가져오기
   useEffect(() => {
     if (isOpen) {
-      fetchReportData();
+      // ✅ setTimeout으로 감싸서 비동기로 실행 (0ms)
+      setTimeout(() => fetchReportData(), 0);
     }
-  }, [isOpen, viewMode]);
+  }, [isOpen, fetchReportData]);
 
   if (!isOpen) return null;
 
