@@ -34,6 +34,7 @@ interface ReportModalProps {
 type ChartData = {
   name: string;
   hours: number;
+  seconds: number;
 };
 
 export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
@@ -48,7 +49,22 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
   const formatDuration = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
-    return `${h}h ${m}m`;
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+  };
+
+  const formatTooltipDuration = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    if (h > 0) return `${h}?? ${m}?`;
+    return `${m}?`;
+  };
+
+  const formatAxisValue = (hours: number) => {
+    if (hours < 1) {
+      return `${Math.round(hours * 60)}m`;
+    }
+    return `${hours}h`;
   };
 
   const fetchReportData = useCallback(async () => {
@@ -127,6 +143,7 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
         return {
           name: format(month, 'MMM'), // Jan, Feb...
           hours: parseFloat((monthSeconds / 3600).toFixed(1)),
+          seconds: monthSeconds,
         };
       });
     } else {
@@ -141,6 +158,7 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
         return {
           name: viewMode === 'week' ? format(day, 'EEE') : format(day, 'd'), // Mon or 1, 2, 3...
           hours: parseFloat((daySeconds / 3600).toFixed(1)),
+          seconds: daySeconds,
         };
       });
     }
@@ -306,7 +324,7 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
                     fontSize={11}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(value) => `${value}h`}
+                    tickFormatter={(value) => formatAxisValue(value)}
                   />
                   <Tooltip
                     cursor={{ fill: 'rgba(0,0,0,0.05)' }}
@@ -318,7 +336,10 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
                       fontSize: '12px',
                       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                     }}
-                    formatter={(value: number) => [`${value}시간`, '집중']}
+                    formatter={(_, __, props) => [
+                      formatTooltipDuration(props?.payload?.seconds ?? 0),
+                      '??',
+                    ]}
                   />
                   <Bar dataKey="hours" radius={[4, 4, 0, 0]} maxBarSize={50}>
                     {chartData.map((entry, index) => (
