@@ -211,6 +211,30 @@ export default function TimerApp({
     isRunningRef.current = isRunning;
   }, [isRunning]);
 
+  useEffect(() => {
+    const defaultTitle = 'Pomofomo';
+    const modeLabel =
+      timerMode === 'focus'
+        ? 'Focus'
+        : timerMode === 'shortBreak'
+        ? 'Short Break'
+        : 'Long Break';
+
+    if (isRunning) {
+      document.title = `${formatTime(timeLeft)} - ${modeLabel} | Pomofomo`;
+    } else if (isStopwatchRunning) {
+      document.title = `${formatTime(stopwatchTime)} - Stopwatch | Pomofomo`;
+    } else {
+      document.title = defaultTitle;
+    }
+  }, [isRunning, timeLeft, timerMode, isStopwatchRunning, stopwatchTime]);
+
+  useEffect(() => {
+    return () => {
+      document.title = 'Pomofomo';
+    };
+  }, []);
+
   const persistSettings = useCallback(async (newSettings: typeof settings) => {
     localStorage.setItem('pomofomo_settings', JSON.stringify(newSettings));
     try {
