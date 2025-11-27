@@ -24,6 +24,41 @@ export default function HistoryList({ updateTrigger = 0 }: HistoryListProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [taskDraft, setTaskDraft] = useState('');
   const [updatingTaskId, setUpdatingTaskId] = useState<number | null>(null);
+  const [taskOptions, setTaskOptions] = useState<string[]>([]);
+
+  const loadTaskOptions = async () => {
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      const user = authData.user;
+
+      let tasks: string[] | null = null;
+
+      if (user) {
+        const { data } = await supabase
+          .from('user_settings')
+          .select('settings')
+          .eq('user_id', user.id)
+          .single();
+
+        if (data?.settings?.tasks && data.settings.tasks.length > 0) {
+          tasks = data.settings.tasks;
+        }
+      }
+
+      if (!tasks) {
+        const localSaved = localStorage.getItem('pomofomo_settings');
+        if (localSaved) {
+          const parsed = JSON.parse(localSaved);
+          if (parsed.tasks && parsed.tasks.length > 0) tasks = parsed.tasks;
+        }
+      }
+
+      setTaskOptions(tasks ?? ['국어', '수학', '영어']);
+    } catch (error) {
+      console.error('작업 목록 로드 실패:', error);
+      setTaskOptions(['국어', '수학', '영어']);
+    }
+  };
 
   const fetchHistory = async () => {
     try {
@@ -79,6 +114,9 @@ export default function HistoryList({ updateTrigger = 0 }: HistoryListProps) {
   const startEditing = (item: StudySession) => {
     setEditingId(item.id);
     setTaskDraft(item.task ?? '');
+    if (item.task && !taskOptions.includes(item.task)) {
+      setTaskOptions((prev) => [...prev, item.task as string]);
+    }
   };
 
   const cancelEditing = () => {
@@ -118,6 +156,7 @@ export default function HistoryList({ updateTrigger = 0 }: HistoryListProps) {
 
   // ✨ updateTrigger가 변경될 때마다 다시 로드
   useEffect(() => {
+    loadTaskOptions();
     fetchHistory();
   }, [updateTrigger]);
 
@@ -188,12 +227,18 @@ export default function HistoryList({ updateTrigger = 0 }: HistoryListProps) {
 
                       {editingId === item.id ? (
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1 min-w-0 text-xs text-gray-500">
-                          <input
+                          <select
                             value={taskDraft}
                             onChange={(e) => setTaskDraft(e.target.value)}
                             className="flex-1 min-w-0 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-rose-300 dark:focus:ring-rose-500"
-                            placeholder="작업 메모를 입력하세요"
-                          />
+                          >
+                            <option value="">작업 없음</option>
+                            {taskOptions.map((task) => (
+                              <option key={task} value={task}>
+                                {task}
+                              </option>
+                            ))}
+                          </select>
                           <div className="flex gap-1 shrink-0">
                             <button
                               onClick={() => handleUpdateTask(item.id)}

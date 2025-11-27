@@ -81,6 +81,7 @@ export default function TimerApp({
     volume: 50,
     isMuted: false,
     taskPopupEnabled: true,
+    tasks: ['국어', '수학', '영어'],
     presets: [
       { id: '1', label: '작업1', minutes: 25 },
       { id: '2', label: '작업2', minutes: 50 },
@@ -89,7 +90,7 @@ export default function TimerApp({
   });
 
   const [taskModalOpen, setTaskModalOpen] = useState(false);
-  const [taskDescription, setTaskDescription] = useState('');
+  const [selectedTask, setSelectedTask] = useState('');
   const [pendingRecord, setPendingRecord] = useState<
     { mode: string; duration: number; onAfterSave?: () => void } | null
   >(null);
@@ -137,6 +138,10 @@ export default function TimerApp({
           ...parsed,
           taskPopupEnabled:
             parsed.taskPopupEnabled ?? prev.taskPopupEnabled ?? true,
+          tasks:
+            parsed.tasks && parsed.tasks.length > 0
+              ? parsed.tasks
+              : prev.tasks,
           presets:
             parsed.presets && parsed.presets.length > 0
               ? parsed.presets
@@ -298,24 +303,24 @@ export default function TimerApp({
 
       if (settings.taskPopupEnabled) {
         setPendingRecord({ mode: recordMode, duration, onAfterSave });
-        setTaskDescription('');
+        setSelectedTask(settings.tasks[0] ?? '');
         setTaskModalOpen(true);
       } else {
         await saveRecord(recordMode, duration);
         if (onAfterSave) onAfterSave();
       }
     },
-    [saveRecord, settings.taskPopupEnabled]
+    [saveRecord, settings.taskPopupEnabled, settings.tasks]
   );
 
   const handleTaskSubmit = useCallback(async () => {
     if (!pendingRecord) return;
-    await saveRecord(pendingRecord.mode, pendingRecord.duration, taskDescription);
+    await saveRecord(pendingRecord.mode, pendingRecord.duration, selectedTask);
     if (pendingRecord.onAfterSave) pendingRecord.onAfterSave();
     setTaskModalOpen(false);
     setPendingRecord(null);
-    setTaskDescription('');
-  }, [pendingRecord, saveRecord, taskDescription]);
+    setSelectedTask('');
+  }, [pendingRecord, saveRecord, selectedTask]);
 
   const handleTaskSkip = useCallback(async () => {
     if (!pendingRecord) return;
@@ -323,7 +328,7 @@ export default function TimerApp({
     if (pendingRecord.onAfterSave) pendingRecord.onAfterSave();
     setTaskModalOpen(false);
     setPendingRecord(null);
-    setTaskDescription('');
+    setSelectedTask('');
   }, [pendingRecord, saveRecord]);
 
   const handleDisableTaskPopup = useCallback(async () => {
@@ -332,13 +337,13 @@ export default function TimerApp({
     await persistSettings(updated);
     toast.success('자동 팝업을 끄고 바로 저장합니다. 설정에서 다시 켤 수 있어요.');
     if (pendingRecord) {
-      await saveRecord(pendingRecord.mode, pendingRecord.duration, taskDescription);
+      await saveRecord(pendingRecord.mode, pendingRecord.duration, selectedTask);
       if (pendingRecord.onAfterSave) pendingRecord.onAfterSave();
       setPendingRecord(null);
-      setTaskDescription('');
+      setSelectedTask('');
     }
     setTaskModalOpen(false);
-  }, [pendingRecord, persistSettings, saveRecord, settings, taskDescription]);
+  }, [pendingRecord, persistSettings, saveRecord, selectedTask, settings]);
 
   const savePartialProgress = useCallback(() => {
     const fullTime =
@@ -665,7 +670,7 @@ export default function TimerApp({
               <div>
                 <div className="text-sm font-bold text-gray-800 dark:text-gray-100">어떤 작업을 했나요?</div>
                 <p className="text-xs text-gray-500 mt-1">
-                  기록에 작업 메모를 남겨두면 나중에 더 쉽게 돌아볼 수 있어요.
+                  설정에서 만들어 둔 작업 목록을 선택하면 Report에서 통계가 깨끗하게 모여요.
                 </p>
               </div>
               <button
@@ -679,14 +684,25 @@ export default function TimerApp({
             <div className="p-5 space-y-4">
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-600 dark:text-gray-200">
-                  작업 메모
+                  작업 선택
                 </label>
-                <input
-                  value={taskDescription}
-                  onChange={(e) => setTaskDescription(e.target.value)}
-                  placeholder="예: 리팩토링, 회의 준비, 계획 세우기 등"
-                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 px-3 py-3 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-rose-300 dark:focus:ring-rose-500"
-                />
+                <div className="space-y-2">
+                  <select
+                    value={selectedTask}
+                    onChange={(e) => setSelectedTask(e.target.value)}
+                    className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 px-3 py-3 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-rose-300 dark:focus:ring-rose-500"
+                  >
+                    <option value="">작업 없음</option>
+                    {settings.tasks.map((task) => (
+                      <option key={task} value={task}>
+                        {task}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-gray-500">
+                    작업은 설정 &gt; 작업 목록에서 추가·수정할 수 있어요. 미리 정해 둔 이름을 써야 Report에 일관되게 집계돼요.
+                  </p>
+                </div>
               </div>
               <div className="flex items-start justify-between gap-3 text-[11px] text-gray-400">
                 <div className="space-y-1">

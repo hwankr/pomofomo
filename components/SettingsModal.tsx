@@ -26,6 +26,7 @@ type Settings = {
   volume: number;
   isMuted: boolean;
   taskPopupEnabled: boolean;
+  tasks: string[];
   presets: Preset[];
 };
 
@@ -39,6 +40,7 @@ const DEFAULT_SETTINGS = {
   volume: 50,
   isMuted: false, // ✨ 기본값 추가
   taskPopupEnabled: true,
+  tasks: ['국어', '수학', '영어'],
   presets: [
     { id: '1', label: '작업1', minutes: 25 },
     { id: '2', label: '작업2', minutes: 50 },
@@ -68,6 +70,7 @@ export default function SettingsModal({
   const [taskPopupEnabled, setTaskPopupEnabled] = useState(
     DEFAULT_SETTINGS.taskPopupEnabled
   );
+  const [tasks, setTasks] = useState<string[]>(DEFAULT_SETTINGS.tasks);
   const [presets, setPresets] = useState<Preset[]>(DEFAULT_SETTINGS.presets);
 
   useEffect(() => {
@@ -113,6 +116,9 @@ export default function SettingsModal({
           setTaskPopupEnabled(
             loadedSettings.taskPopupEnabled ?? DEFAULT_SETTINGS.taskPopupEnabled
           );
+          if (loadedSettings.tasks && loadedSettings.tasks.length > 0) {
+            setTasks(loadedSettings.tasks);
+          }
           if (loadedSettings.presets && loadedSettings.presets.length > 0) {
             setPresets(loadedSettings.presets);
           }
@@ -146,6 +152,7 @@ const saveToAll = async (newSettings: Settings) => {
       volume,
       isMuted,
       taskPopupEnabled,
+      tasks,
       presets,
     };
     await saveToAll(newSettings);
@@ -166,6 +173,7 @@ const saveToAll = async (newSettings: Settings) => {
     setVolume(DEFAULT_SETTINGS.volume);
     setIsMuted(DEFAULT_SETTINGS.isMuted);
     setTaskPopupEnabled(DEFAULT_SETTINGS.taskPopupEnabled);
+    setTasks(DEFAULT_SETTINGS.tasks);
     setPresets(DEFAULT_SETTINGS.presets);
 
     await saveToAll(DEFAULT_SETTINGS);
@@ -220,6 +228,22 @@ const saveToAll = async (newSettings: Settings) => {
     setPresets(presets.filter((p) => p.id !== id));
   };
 
+  const addTask = () => {
+    if (tasks.length >= 10) {
+      toast.error('작업은 최대 10개까지만 저장할 수 있어요.');
+      return;
+    }
+    setTasks([...tasks, '새 작업']);
+  };
+
+  const updateTask = (index: number, value: string) => {
+    setTasks(tasks.map((task, i) => (i === index ? value : task)));
+  };
+
+  const removeTask = (index: number) => {
+    setTasks(tasks.filter((_, i) => i !== index));
+  };
+
   const updatePreset = (
     id: string,
     field: 'label' | 'minutes',
@@ -255,6 +279,45 @@ const saveToAll = async (newSettings: Settings) => {
         </div>
 
         <div className="p-6 overflow-y-auto space-y-8 scrollbar-hide">
+          <section>
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-gray-400 text-xs font-bold flex items-center gap-2">
+                🗂️ 작업 목록 (Report 집계용)
+              </h3>
+              <button
+                onClick={addTask}
+                className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded hover:bg-gray-200 transition-colors font-bold"
+              >
+                + 추가
+              </button>
+            </div>
+            <p className="text-[11px] text-gray-500 mb-2">
+              여기서 정한 이름만 선택해서 저장되므로, Report에서 국어·수학처럼 일관된 항목으로 모아볼 수 있어요.
+            </p>
+            <div className="space-y-2">
+              {tasks.map((task, index) => (
+                <div key={`${task}-${index}`} className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    value={task}
+                    onChange={(e) => updateTask(index, e.target.value)}
+                    className={`${inputStyle} flex-grow`}
+                    placeholder="예: 국어"
+                  />
+                  <button
+                    onClick={() => removeTask(index)}
+                    className="text-gray-400 hover:text-red-500 p-2"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              ))}
+              {tasks.length === 0 && (
+                <div className="text-[11px] text-gray-400">작업을 추가해주세요.</div>
+              )}
+            </div>
+          </section>
+          <hr className="border-gray-100" />
           <section>
             <div className="flex justify-between items-end mb-3">
               <h3 className="text-gray-400 text-xs font-bold flex items-center gap-2">
