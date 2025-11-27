@@ -278,7 +278,8 @@ const saveToAll = async (newSettings: Settings) => {
     'absolute top-1 left-1 w-3 h-3 bg-white rounded-full shadow transform transition-transform duration-200 ease-in-out';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]">
         <div className="flex justify-between items-center p-5 border-b border-gray-100">
           <h2 className="text-gray-500 font-bold tracking-widest text-sm flex items-center gap-2">
@@ -620,6 +621,7 @@ const saveToAll = async (newSettings: Settings) => {
           </div>
         </div>
       </div>
-    )}
+      )}
+    </>
   );
 }
