@@ -204,12 +204,14 @@ export default function TimerApp({
   const saveRecord = useCallback(
     async (recordMode: string, duration: number) => {
       if (duration < 10) return;
-      const minutes = Math.floor(duration / 60);
-      if (minutes < 1) {
-        console.log('1분 미만이라 기록되지 않음');
-        return;
-      }
-      const durationToSave = minutes * 60;
+
+      const formatDurationForToast = (totalSeconds: number) => {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        if (minutes === 0) return `${seconds}초`;
+        if (seconds === 0) return `${minutes}분`;
+        return `${minutes}분 ${seconds}초`;
+      };
 
       const {
         data: { user },
@@ -229,12 +231,12 @@ export default function TimerApp({
       try {
         const { error } = await supabase.from('study_sessions').insert({
           mode: recordMode,
-          duration: durationToSave,
+          duration,
           user_id: user.id,
         });
         if (error) throw error;
 
-        toast.success(`${minutes}분 기록 저장 완료!`, { id: toastId });
+        toast.success(`${formatDurationForToast(duration)} 기록 저장 완료!`, { id: toastId });
 
         // ✨ [추가] 부모에게 알림 -> HistoryList 새로고침
         onRecordSaved();
