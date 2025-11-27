@@ -203,8 +203,17 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
       })
     );
 
+    const todayKey =
+      viewMode === 'year'
+        ? format(today, 'yyyy-MM')
+        : format(today, 'yyyy-MM-dd');
+    const preferredBucket =
+      newChartData.find((bucket) => bucket.bucketKey === todayKey) ??
+      newChartData[newChartData.length - 1] ??
+      null;
+
     setChartData(newChartData);
-    setSelectedBucket(newChartData[0] ?? null);
+    setSelectedBucket(preferredBucket);
     setLoading(false);
   }, [viewMode]);
 
