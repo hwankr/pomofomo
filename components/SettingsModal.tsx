@@ -72,6 +72,7 @@ export default function SettingsModal({
   );
   const [tasks, setTasks] = useState<string[]>(DEFAULT_SETTINGS.tasks);
   const [presets, setPresets] = useState<Preset[]>(DEFAULT_SETTINGS.presets);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -162,12 +163,16 @@ const saveToAll = async (newSettings: Settings) => {
   };
 
   const handleCloseClick = () => {
-    const shouldSave = confirm('변경사항을 저장하고 닫을까요?');
+    setShowCloseConfirm(true);
+  };
+
+  const handleConfirmClose = async (shouldSave: boolean) => {
     if (shouldSave) {
-      handleSave();
+      await handleSave();
     } else {
       onClose();
     }
+    setShowCloseConfirm(false);
   };
 
   const handleResetSettings = async () => {
@@ -583,5 +588,38 @@ const saveToAll = async (newSettings: Settings) => {
         </div>
       </div>
     </div>
+
+    {showCloseConfirm && (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-fade-in">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+          <div className="p-5 border-b border-gray-100">
+            <h3 className="text-sm font-bold text-gray-700">변경사항을 저장할까요?</h3>
+            <p className="text-xs text-gray-500 mt-1">
+              닫기 전에 저장하지 않은 설정이 있습니다.
+            </p>
+          </div>
+          <div className="p-4 flex flex-col gap-2">
+            <button
+              onClick={() => handleConfirmClose(true)}
+              className="w-full py-3 rounded-xl bg-gray-800 text-white font-bold hover:bg-gray-900 transition-colors shadow-sm text-sm"
+            >
+              저장하고 닫기
+            </button>
+            <button
+              onClick={() => handleConfirmClose(false)}
+              className="w-full py-3 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition-colors text-sm"
+            >
+              저장하지 않고 닫기
+            </button>
+            <button
+              onClick={() => setShowCloseConfirm(false)}
+              className="w-full py-3 rounded-xl text-gray-400 font-bold hover:text-gray-600 transition-colors text-sm"
+            >
+              계속 편집하기
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   );
 }
