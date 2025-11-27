@@ -44,6 +44,9 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
   const [loading, setLoading] = useState(true);
   const [selectedBucket, setSelectedBucket] = useState<ChartData | null>(null);
   const [viewMode, setViewMode] = useState<'week' | 'month' | 'year'>('week');
+  const [activeYear, setActiveYear] = useState(new Date().getFullYear());
+  const [earliestYear, setEarliestYear] = useState<number | null>(null);
+  const currentYear = new Date().getFullYear();
 
   const formatDuration = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
@@ -87,8 +90,9 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
       start = startOfMonth(today);
       end = endOfMonth(today);
     } else {
-      start = startOfYear(today);
-      end = endOfYear(today);
+      const targetDate = new Date(activeYear, 0, 1);
+      start = startOfYear(targetDate);
+      end = endOfYear(targetDate);
     }
 
     const { data: periodSessions } = await supabase
@@ -100,12 +104,27 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
 
     const { data: allSessions } = await supabase
       .from('study_sessions')
-      .select('duration')
+      .select('duration, created_at')
       .eq('user_id', user.id);
 
     const totalSeconds =
       allSessions?.reduce((acc, curr) => acc + curr.duration, 0) || 0;
     setTotalFocusTime(totalSeconds);
+
+    const earliestSessionDate =
+      allSessions?.reduce<Date | null>((acc, curr) => {
+        const createdAt = curr.created_at ? new Date(curr.created_at) : null;
+        if (!createdAt || Number.isNaN(createdAt.getTime())) return acc;
+        if (!acc || createdAt < acc) return createdAt;
+        return acc;
+      }, null) ?? null;
+
+    if (earliestSessionDate) {
+      const firstYear = earliestSessionDate.getFullYear();
+      setEarliestYear((prev) =>
+        prev === null || firstYear < prev ? firstYear : prev
+      );
+    }
 
     const todaySessions = await supabase
       .from('study_sessions')
@@ -203,10 +222,14 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
       })
     );
 
+    const referenceDate =
+      viewMode === 'year'
+        ? new Date(activeYear, today.getMonth(), today.getDate())
+        : today;
     const todayKey =
       viewMode === 'year'
-        ? format(today, 'yyyy-MM')
-        : format(today, 'yyyy-MM-dd');
+        ? format(referenceDate, 'yyyy-MM')
+        : format(referenceDate, 'yyyy-MM-dd');
     const preferredBucket =
       newChartData.find((bucket) => bucket.bucketKey === todayKey) ??
       newChartData[newChartData.length - 1] ??
@@ -215,7 +238,7 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
     setChartData(newChartData);
     setSelectedBucket(preferredBucket);
     setLoading(false);
-  }, [viewMode]);
+  }, [viewMode, activeYear]);
 
   useEffect(() => {
     if (isOpen) {
@@ -224,6 +247,12 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
   }, [isOpen, fetchReportData]);
 
   if (!isOpen) return null;
+
+  const startYear = earliestYear ?? currentYear;
+  const yearOptions: number[] = [];
+  for (let y = currentYear; y >= startYear; y--) {
+    yearOptions.push(y);
+  }
 
   const tabBase = 'px-4 py-1.5 text-xs font-bold rounded-md transition-all';
   const tabActive =
@@ -305,31 +334,51 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
               <h3 className="text-sm font-bold text-gray-600 dark:text-gray-300 flex items-center gap-2">
                 집중 통계
               </h3>
-              <div className="bg-gray-100 dark:bg-slate-800 p-1 rounded-lg flex">
-                <button
-                  onClick={() => setViewMode('week')}
-                  className={`${tabBase} ${
-                    viewMode === 'week' ? tabActive : tabInactive
-                  }`}
-                >
-                  Week
-                </button>
-                <button
-                  onClick={() => setViewMode('month')}
-                  className={`${tabBase} ${
-                    viewMode === 'month' ? tabActive : tabInactive
-                  }`}
-                >
-                  Month
-                </button>
-                <button
-                  onClick={() => setViewMode('year')}
-                  className={`${tabBase} ${
-                    viewMode === 'year' ? tabActive : tabInactive
-                  }`}
-                >
-                  Year
-                </button>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div className="bg-gray-100 dark:bg-slate-800 p-1 rounded-lg flex">
+                  <button
+                    onClick={() => setViewMode('week')}
+                    className={`${tabBase} ${
+                      viewMode === 'week' ? tabActive : tabInactive
+                    }`}
+                  >
+                    Week
+                  </button>
+                  <button
+                    onClick={() => setViewMode('month')}
+                    className={`${tabBase} ${
+                      viewMode === 'month' ? tabActive : tabInactive
+                    }`}
+                  >
+                    Month
+                  </button>
+                  <button
+                    onClick={() => setViewMode('year')}
+                    className={`${tabBase} ${
+                      viewMode === 'year' ? tabActive : tabInactive
+                    }`}
+                  >
+                    Year
+                  </button>
+                </div>
+                {viewMode === 'year' && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-300">
+                      Year
+                    </span>
+                    <select
+                      value={activeYear}
+                      onChange={(e) => setActiveYear(Number(e.target.value))}
+                      className="px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-gray-700 dark:text-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-rose-300 dark:focus:ring-rose-500"
+                    >
+                      {yearOptions.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -416,7 +465,7 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
               {viewMode === 'month' &&
                 `${format(startOfMonth(new Date()), 'yyyy.MM')} (1일~${endOfMonth(new Date()).getDate()}일)`}
               {viewMode === 'year' &&
-                `${format(startOfYear(new Date()), 'yyyy')}년 (1월~12월)`}
+                `${format(startOfYear(new Date(activeYear, 0, 1)), 'yyyy')}년 (1월~12월)`}
             </div>
 
             <div className="mt-4 bg-gray-50 dark:bg-slate-800/60 rounded-xl p-4 border border-gray-100 dark:border-slate-700">
