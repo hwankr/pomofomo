@@ -16,10 +16,3 @@
 - 데이터/인증: Supabase (Auth + Postgres)
 - 기타: date-fns, Recharts
 
-
-
-## 배포
-- Vercel에 `NEXT_PUBLIC_SUPABASE_*` 환경 변수를 추가하고 `npm run build`를 빌드 명령으로 설정합니다.
-
-## 라이선스
-별도 명시가 없으므로 개인 용도로만 사용하세요. 필요 시 저장소 라이선스를 확인해 주세요.
