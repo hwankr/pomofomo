@@ -16,43 +16,7 @@
 - 데이터/인증: Supabase (Auth + Postgres)
 - 기타: date-fns, Recharts
 
-## 로컬 실행
-1) 의존성 설치
-```bash
-npm install
-```
-2) 환경 변수 설정: `.env.local`
-```bash
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-3) 개발 서버
-```bash
-npm run dev
-# http://localhost:3000
-```
-4) 빌드/실행
-```bash
-npm run build
-npm start
-```
-5) 린트
-```bash
-npm run lint
-```
 
-## Supabase 설정 가이드
-- OAuth: 구글 제공자를 활성화하고 리다이렉트 URL에 `https://<도메인>/`과 `http://localhost:3000`을 등록합니다.
-- 권한(RLS): `auth.uid()`로 소유자만 접근하도록 정책을 추가합니다.
-- 예시 테이블
-  - `study_sessions`: `id`(pk), `user_id`(uuid, ref auth.users), `mode`(text), `duration`(int, 초), `task`(text, nullable), `created_at`(timestamp, default now)
-  - `user_settings`: `user_id`(pk, uuid), `settings`(jsonb), `updated_at`(timestamp, default now)
-  - 필요 시 `timer_states` 등 추가 테이블을 동일한 RLS 규칙으로 구성할 수 있습니다.
-
-## 폴더 구조 (주요)
-- `app/` Next.js 페이지, 글로벌 스타일 및 PWA manifest
-- `components/` 타이머·히스토리·리포트·로그인·설정 모달 등 UI 로직
-- `lib/supabase.ts` Supabase 클라이언트 초기화
 
 ## 배포
 - Vercel에 `NEXT_PUBLIC_SUPABASE_*` 환경 변수를 추가하고 `npm run build`를 빌드 명령으로 설정합니다.
