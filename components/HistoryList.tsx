@@ -230,7 +230,7 @@ export default function HistoryList({ updateTrigger = 0 }: HistoryListProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
                       <div>
-                        <div className="font-bold text-gray-700 dark:text-gray-200 text-sm">
+                        <div className="font-bold text-gray-700 dark:text-gray-200 text-sm">  
                           {item.mode === 'pomo' ? '뽀모도로' : '스톱워치'}
                         </div>
                         <div className="text-xs text-gray-400">

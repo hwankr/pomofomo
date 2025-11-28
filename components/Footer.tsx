@@ -15,6 +15,16 @@ export default function Footer() {
             <p className="mt-4 text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
               Focus on your work, not the fear of missing out. Boost your productivity with our simple timer.
             </p>
+            <div className="mt-6">
+              <a
+                href="https://forms.gle/38KkoosvRhahS1jL8"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block px-6 py-3 bg-rose-500 text-white font-bold rounded-full hover:bg-rose-600 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                의견 보내기!!!
+              </a>
+            </div>
           </div>
         </div>
 
