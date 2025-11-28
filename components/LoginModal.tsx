@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -58,9 +59,11 @@ export default function LoginModal({
           onClick={onGoogleLogin}
           className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-100 py-3 rounded-lg text-gray-600 font-bold shadow-sm hover:bg-gray-50 hover:border-gray-200 transition-all mb-6 group"
         >
-          <img
+          <Image
             src="https://www.svgrepo.com/show/475656/google-color.svg"
             alt="Google"
+            width={20}
+            height={20}
             className="w-5 h-5 group-hover:scale-110 transition-transform"
           />
           Sign up with Google
