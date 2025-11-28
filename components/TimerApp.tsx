@@ -70,6 +70,11 @@ export default function TimerApp({
 
   const endTimeRef = useRef<number>(0);
   const stopwatchStartTimeRef = useRef<number>(0);
+  const mainBgRef = useRef<{
+    background: string;
+    backgroundColor: string;
+    backgroundImage: string;
+  } | null>(null);
 
   const [settings, setSettings] = useState({
     pomoTime: 25,
@@ -675,6 +680,11 @@ export default function TimerApp({
         textMain: 'text-indigo-500 dark:text-indigo-400',
         btnMain: 'bg-indigo-500 hover:bg-indigo-600 shadow-indigo-200',
         modeBtnActive: 'bg-indigo-500 text-white border-indigo-500 shadow-sm',
+        glowFrom: 'from-indigo-200/70 via-indigo-100/50',
+        glowTo: 'to-indigo-400/40',
+        ring: 'ring-indigo-200/80 dark:ring-indigo-400/40 ring-offset-4 ring-offset-white dark:ring-offset-slate-900',
+        overlayFrom: 'from-indigo-200/40',
+        overlayTo: 'to-indigo-900/30',
       };
     }
 
@@ -685,6 +695,11 @@ export default function TimerApp({
         textMain: 'text-emerald-500 dark:text-emerald-400',
         btnMain: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200',
         modeBtnActive: 'bg-emerald-500 text-white border-emerald-500 shadow-sm',
+        glowFrom: 'from-emerald-200/70 via-emerald-100/50',
+        glowTo: 'to-emerald-400/40',
+        ring: 'ring-emerald-200/80 dark:ring-emerald-400/40 ring-offset-4 ring-offset-white dark:ring-offset-slate-900',
+        overlayFrom: 'from-emerald-200/40',
+        overlayTo: 'to-emerald-900/30',
       };
     }
 
@@ -694,10 +709,62 @@ export default function TimerApp({
       textMain: 'text-rose-500 dark:text-rose-400',
       btnMain: 'bg-rose-500 hover:bg-rose-600 shadow-rose-200',
       modeBtnActive: 'bg-rose-500 text-white border-rose-500 shadow-sm',
+      glowFrom: 'from-rose-200/70 via-rose-100/50',
+      glowTo: 'to-rose-400/40',
+      ring: 'ring-rose-200/80 dark:ring-rose-400/40 ring-offset-4 ring-offset-white dark:ring-offset-slate-900',
+      overlayFrom: 'from-rose-200/40',
+      overlayTo: 'to-rose-900/30',
     };
   };
 
   const theme = getThemeStyles();
+  const isAnyRunning = isRunning || isStopwatchRunning;
+
+  useEffect(() => {
+    const mainEl = document.querySelector('main');
+    if (!mainEl) return;
+
+    if (!mainBgRef.current) {
+      mainBgRef.current = {
+        background: mainEl.style.background,
+        backgroundColor: mainEl.style.backgroundColor,
+        backgroundImage: mainEl.style.backgroundImage,
+      };
+    }
+
+    const isTimerRunning = isRunning && tab === 'timer';
+    const isStopwatchActive = isStopwatchRunning && tab === 'stopwatch';
+    if (isTimerRunning || isStopwatchActive) {
+      const isDark =
+        document.documentElement.classList.contains('dark') ||
+        mainEl.classList.contains('dark');
+      const lightBg = tab === 'stopwatch'
+        ? '#e0e7ff' // indigo-100-ish
+        : timerMode === 'focus'
+          ? '#fff1f2' // rose-50
+          : '#ecfdf3'; // emerald-50
+      const darkBg = tab === 'stopwatch'
+        ? '#1e1b4b' // indigo-950-ish
+        : timerMode === 'focus'
+          ? '#2b0f1c' // rose-950-ish
+          : '#042f2e'; // emerald-950-ish
+
+      mainEl.style.backgroundImage = '';
+      mainEl.style.backgroundColor = isDark ? darkBg : lightBg;
+    } else if (mainBgRef.current) {
+      mainEl.style.background = mainBgRef.current.background;
+      mainEl.style.backgroundColor = mainBgRef.current.backgroundColor;
+      mainEl.style.backgroundImage = mainBgRef.current.backgroundImage;
+    }
+
+    return () => {
+      if (mainBgRef.current) {
+        mainEl.style.background = mainBgRef.current.background;
+        mainEl.style.backgroundColor = mainBgRef.current.backgroundColor;
+        mainEl.style.backgroundImage = mainBgRef.current.backgroundImage;
+      }
+    };
+  }, [isRunning, isStopwatchRunning, tab, timerMode]);
 
   const modeBtnBase =
     'px-3 py-2 sm:px-5 sm:py-2 rounded-full text-xs sm:text-sm font-bold border-2 transition-all whitespace-nowrap flex-1 sm:flex-none';
@@ -796,7 +863,17 @@ export default function TimerApp({
         </div>
       )}
 
-      <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden transition-all duration-300">
+      <div className="relative w-full max-w-md mx-auto">
+        <div
+          className={`absolute -inset-4 rounded-[2.5rem] blur-3xl transition-all duration-700 pointer-events-none -z-10 bg-gradient-to-br ${theme.glowFrom} ${theme.glowTo} ${
+            isAnyRunning ? 'opacity-80 scale-100' : 'opacity-0 scale-95'
+          }`}
+        />
+        <div
+          className={`relative w-full bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden transition-all duration-300 transform ${
+            isAnyRunning ? `ring-2 ${theme.ring} shadow-2xl scale-[1.02]` : ''
+          }`}
+        >
       <div className="flex p-1 bg-gray-100 dark:bg-slate-900/50 m-2 rounded-2xl">
         <button
           onClick={() => setTab('timer')}
@@ -821,7 +898,7 @@ export default function TimerApp({
       </div>
 
       <div
-        className={`px-6 py-8 sm:px-10 sm:py-10 flex flex-col items-center justify-center min-h-[360px] transition-colors duration-500 ${theme.bgLight} ${theme.bgDark}`}
+          className={`px-6 py-8 sm:px-10 sm:py-10 flex flex-col items-center justify-center min-h-[360px] transition-colors duration-500 ${theme.bgLight} ${theme.bgDark}`}
       >
         {!isLoaded ? (
           <div className="text-gray-400 animate-pulse text-sm">
@@ -978,7 +1055,8 @@ export default function TimerApp({
           </div>
         )}
       </div>
-    </div>
+        </div>
+      </div>
     </>
   );
 }
