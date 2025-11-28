@@ -549,7 +549,7 @@ export default function TimerApp({
     toast.success(`${minutes === 0.1 ? '5초' : minutes + '분'}으로 설정됨`);
   };
 
-  const toggleStopwatch = () => {
+  const toggleStopwatch = useCallback(() => {
     if (isRunning) {
       toast.error("뽀모도로 타이머가 작동 중입니다.\n먼저 정지해주세요.");
       return;
@@ -576,7 +576,7 @@ export default function TimerApp({
         setStopwatchTime(elapsed);
       }, 200);
     }
-  };
+  }, [isRunning, isStopwatchRunning, saveState, tab, timerMode, timeLeft, cycleCount, focusLoggedSeconds, stopwatchTime]);
 
   const handleStopwatchSave = async () => {
     setIsStopwatchRunning(false);
@@ -629,6 +629,28 @@ export default function TimerApp({
       if (stopwatchRef.current) clearInterval(stopwatchRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    const handleSpaceToggle = (event: KeyboardEvent) => {
+      if (event.code !== 'Space' && event.key !== ' ') return;
+
+      const target = event.target as HTMLElement | null;
+      const tagName = target?.tagName;
+      const isFormField =
+        tagName === 'INPUT' ||
+        tagName === 'TEXTAREA' ||
+        tagName === 'SELECT' ||
+        target?.isContentEditable;
+      if (isFormField || taskModalOpen) return;
+
+      event.preventDefault();
+      if (tab === 'timer') toggleTimer();
+      else toggleStopwatch();
+    };
+
+    window.addEventListener('keydown', handleSpaceToggle);
+    return () => window.removeEventListener('keydown', handleSpaceToggle);
+  }, [tab, toggleStopwatch, toggleTimer, taskModalOpen]);
 
   const getThemeStyles = () => {
     if (tab === 'stopwatch') {
