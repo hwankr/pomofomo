@@ -220,14 +220,29 @@ export default function TimerApp({
         ? 'Short Break'
         : 'Long Break';
 
+    const timerTitle = `${formatTime(timeLeft)} - ${modeLabel} | Pomofomo`;
+    const stopwatchTitle = `${formatTime(stopwatchTime)} - Stopwatch | Pomofomo`;
+
     if (isRunning) {
-      document.title = `${formatTime(timeLeft)} - ${modeLabel} | Pomofomo`;
+      document.title = timerTitle;
+      return;
     } else if (isStopwatchRunning) {
-      document.title = `${formatTime(stopwatchTime)} - Stopwatch | Pomofomo`;
-    } else {
-      document.title = defaultTitle;
+      document.title = stopwatchTitle;
+      return;
     }
-  }, [isRunning, timeLeft, timerMode, isStopwatchRunning, stopwatchTime]);
+
+    if (tab === 'timer') {
+      document.title = timerTitle;
+      return;
+    }
+
+    if (tab === 'stopwatch') {
+      document.title = stopwatchTitle;
+      return;
+    }
+
+    document.title = defaultTitle;
+  }, [isRunning, timeLeft, timerMode, isStopwatchRunning, stopwatchTime, tab]);
 
   useEffect(() => {
     return () => {
