@@ -531,7 +531,7 @@ const saveToAll = async (newSettings: Settings) => {
           <hr className="border-gray-100" />
           <section>
             <h3 className="text-red-400 text-xs font-bold mb-3 flex items-center gap-2">
-              ⚠️ DANGER ZONE
+              ⚠️ 계정 설정
             </h3>
             <div className="flex gap-3">
               <button
@@ -550,7 +550,7 @@ const saveToAll = async (newSettings: Settings) => {
           </section>
 
                     {/* ✨ 후원 섹션 (새로 추가) */}
-          <hr className="border-gray-100" />
+          {/* <hr className="border-gray-100" />
           <section>
             <h3 className="text-gray-400 text-xs font-bold mb-3 flex items-center gap-2">
                ☕ SUPPORT
@@ -569,7 +569,7 @@ const saveToAll = async (newSettings: Settings) => {
             <p className="text-[10px] text-gray-400 text-center mt-2">
               더 좋은 기능을 만드는 데 큰 힘이 됩니다! 🍅
             </p>
-          </section>
+          </section> */}
         </div>
         <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
           <button

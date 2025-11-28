@@ -166,9 +166,17 @@ export default function HistoryList({ updateTrigger = 0 }: HistoryListProps) {
   }, [updateTrigger]);
 
   const formatDuration = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}분 ${s}초`;
+    const hours = Math.floor(seconds / 3600);
+    const remainingSeconds = seconds % 3600;
+    const minutes = Math.floor(remainingSeconds / 60);
+    const secs = remainingSeconds % 60;
+
+    const parts: string[] = [];
+    if (hours > 0) parts.push(`${hours}시간`);
+    if (minutes > 0 || hours > 0) parts.push(`${minutes}분`);
+    if (hours === 0) parts.push(`${secs}초`);
+
+    return parts.join(' ');
   };
 
   const formatDate = (dateString: string) => {
