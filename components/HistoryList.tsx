@@ -215,9 +215,9 @@ export default function HistoryList({ updateTrigger = 0 }: HistoryListProps) {
             {history.map((item) => (
               <li
                 key={item.id}
-                className="flex justify-between items-center p-4 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors group"
+                className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors group"
               >
-                <div className="flex items-start gap-3 flex-1 min-w-0">
+                <div className="flex items-start gap-3 flex-1 min-w-0 w-full">
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
                       item.mode === 'pomo'
@@ -285,14 +285,14 @@ export default function HistoryList({ updateTrigger = 0 }: HistoryListProps) {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 ml-3">
+                <div className="flex items-center gap-4 sm:ml-3 w-full sm:w-auto justify-between sm:justify-end">
                   <div className="font-mono font-bold text-gray-800 dark:text-white text-right">
                     {formatDuration(item.duration)}
                   </div>
 
                   <button
                     onClick={() => handleDelete(item.id)}
-                    className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                    className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
                     title="삭제"
                   >
                     <svg

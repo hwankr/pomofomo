@@ -263,7 +263,7 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in p-4">
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] transition-colors duration-300">
-        <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-slate-700">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-100 dark:border-slate-700">
           <div className="flex items-center gap-3">
             <span className="bg-rose-100 text-rose-500 dark:bg-rose-900/30 dark:text-rose-400 p-2 rounded-xl">
               <svg
@@ -306,8 +306,8 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto scrollbar-hide">
-          <div className="grid grid-cols-2 gap-4 mb-8">
+        <div className="p-4 sm:p-6 overflow-y-auto scrollbar-hide">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
             <div className="bg-gray-50 dark:bg-slate-700/50 p-5 rounded-2xl border border-gray-100 dark:border-slate-600">
               <div className="text-gray-400 text-xs uppercase font-bold tracking-wider mb-2">
                 Total Hours
@@ -329,7 +329,7 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-700/30 p-0 sm:p-6 rounded-2xl sm:border border-gray-100 dark:border-slate-600">
+          <div className="bg-white dark:bg-slate-700/30 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-slate-600">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
               <h3 className="text-sm font-bold text-gray-600 dark:text-gray-300 flex items-center gap-2">
                 집중 통계
@@ -394,7 +394,7 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={chartData}
-                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"

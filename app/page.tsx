@@ -66,7 +66,7 @@ export default function Home() {
 
   return (
     <div className={isDarkMode ? 'dark' : ''}>
-      <main className="flex min-h-screen flex-col items-center bg-[#f8f9fa] dark:bg-[#0f172a] transition-colors duration-300 p-3 sm:p-4 overflow-y-auto font-sans text-gray-900 dark:text-gray-100">
+      <main className="flex min-h-screen flex-col items-center bg-[#f8f9fa] dark:bg-[#0f172a] transition-colors duration-300 p-3 sm:p-4 overflow-y-auto overflow-x-hidden font-sans text-gray-900 dark:text-gray-100">
         <Toaster position="top-center" reverseOrder={false} />
 
         <LoginModal
@@ -85,8 +85,8 @@ export default function Home() {
         />
 
         <div className="py-4 sm:py-8 flex flex-col items-center w-full max-w-lg relative">
-          <div className="w-full flex justify-between items-center mb-8 px-1">
-            <div className="flex items-center gap-2 select-none">
+          <div className="w-full flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-8 px-1">
+            <div className="flex items-center gap-2 select-none min-w-0">
               <Image
                 src={appIcon}
                 alt="Pomofomo icon"
@@ -100,7 +100,7 @@ export default function Home() {
               </h1>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 justify-end sm:justify-start w-full sm:w-auto">
               <button
                 onClick={() => setIsDarkMode(!isDarkMode)}
                 className={headerBtnStyle}

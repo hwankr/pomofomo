@@ -874,7 +874,7 @@ export default function TimerApp({
             isAnyRunning ? `ring-2 ${theme.ring} shadow-2xl scale-[1.02]` : ''
           }`}
         >
-      <div className="flex p-1 bg-gray-100 dark:bg-slate-900/50 m-2 rounded-2xl">
+      <div className="flex w-full p-1 bg-gray-100 dark:bg-slate-900/50 m-2 rounded-2xl">
         <button
           onClick={() => setTab('timer')}
           className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${
@@ -898,7 +898,7 @@ export default function TimerApp({
       </div>
 
       <div
-          className={`px-6 py-8 sm:px-10 sm:py-10 flex flex-col items-center justify-center min-h-[360px] transition-colors duration-500 ${theme.bgLight} ${theme.bgDark}`}
+          className={`px-6 py-8 sm:px-10 sm:py-10 flex flex-col items-center justify-center min-h-[360px] transition-colors duration-500 ${theme.bgLight} ${theme.bgDark} w-full`}
       >
         {!isLoaded ? (
           <div className="text-gray-400 animate-pulse text-sm">
@@ -938,7 +938,7 @@ export default function TimerApp({
             </div>
 
             <div
-              className={`text-7xl sm:text-8xl font-bold mb-4 font-mono tracking-tighter transition-colors ${theme.textMain}`}
+              className={`text-6xl sm:text-7xl md:text-8xl font-bold mb-4 font-mono tracking-tighter transition-colors ${theme.textMain}`}
             >
               {formatTime(timeLeft)}
             </div>
@@ -962,10 +962,10 @@ export default function TimerApp({
               </div>
             )}
 
-            <div className="flex justify-center gap-4">
+            <div className="flex flex-wrap justify-center gap-3 sm:gap-4 w-full">
               <button
                 onClick={() => toggleTimer()}
-                className={`px-10 py-4 rounded-2xl font-bold text-lg text-white transition-all active:scale-95 shadow-lg ${theme.btnMain} dark:shadow-none min-w-[140px]`}
+                className={`px-10 py-4 rounded-2xl font-bold text-lg text-white transition-all active:scale-95 shadow-lg ${theme.btnMain} dark:shadow-none min-w-[140px] w-full sm:w-auto`}
               >
                 {isRunning ? '일시정지' : '시작'}
               </button>
@@ -974,7 +974,7 @@ export default function TimerApp({
                 <button
                   onClick={handleTimerSave}
                   disabled={isSaving}
-                  className="px-5 py-4 rounded-2xl font-bold text-white bg-gray-800 hover:bg-black disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-sm"
+                  className="px-5 py-4 rounded-2xl font-bold text-white bg-gray-800 hover:bg-black disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-sm min-w-[110px] w-full sm:w-auto"
                 >
                   저장
                 </button>
@@ -983,7 +983,7 @@ export default function TimerApp({
               {!isRunning && showReset && (
                 <button
                   onClick={resetTimerManual}
-                  className="p-4 rounded-2xl bg-white dark:bg-slate-700 text-gray-400 border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-600 transition-all animate-fade-in shadow-sm"
+                  className="p-4 rounded-2xl bg-white dark:bg-slate-700 text-gray-400 border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-600 transition-all animate-fade-in shadow-sm flex justify-center w-full sm:w-auto"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -1009,14 +1009,14 @@ export default function TimerApp({
               스톱워치
             </div>
 
-            <div className="text-7xl sm:text-8xl font-bold mb-10 font-mono tracking-tighter text-indigo-500 dark:text-indigo-400">
+            <div className="text-6xl sm:text-7xl md:text-8xl font-bold mb-10 font-mono tracking-tighter text-indigo-500 dark:text-indigo-400">
               {formatTime(stopwatchTime)}
             </div>
 
-            <div className="flex gap-4 justify-center items-center">
+            <div className="flex flex-wrap gap-3 sm:gap-4 justify-center items-center w-full">
               <button
                 onClick={toggleStopwatch}
-                className="px-10 py-4 rounded-2xl font-bold text-lg text-white bg-indigo-500 hover:bg-indigo-600 shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95 min-w-[140px]"
+                className="px-10 py-4 rounded-2xl font-bold text-lg text-white bg-indigo-500 hover:bg-indigo-600 shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95 min-w-[140px] w-full sm:w-auto"
               >
                 {isStopwatchRunning ? '일시정지' : '시작'}
               </button>
@@ -1026,13 +1026,13 @@ export default function TimerApp({
                   <button
                     onClick={handleStopwatchSave}
                     disabled={isSaving}
-                    className="px-5 py-4 rounded-2xl font-bold text-white bg-gray-800 hover:bg-black transition-all shadow-sm"
+                    className="px-5 py-4 rounded-2xl font-bold text-white bg-gray-800 hover:bg-black transition-all shadow-sm min-w-[110px] w-full sm:w-auto"
                   >
                     저장
                   </button>
                   <button
                     onClick={resetStopwatch}
-                    className="p-4 rounded-2xl bg-white dark:bg-slate-700 text-gray-400 border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-600 transition-all shadow-sm"
+                    className="p-4 rounded-2xl bg-white dark:bg-slate-700 text-gray-400 border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-600 transition-all shadow-sm flex justify-center w-full sm:w-auto"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
