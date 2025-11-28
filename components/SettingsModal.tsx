@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -42,9 +42,9 @@ const DEFAULT_SETTINGS = {
   taskPopupEnabled: true,
   tasks: ['국어', '수학', '영어'],
   presets: [
-    { id: '1', label: '작업1', minutes: 25 },
-    { id: '2', label: '작업2', minutes: 50 },
-    { id: '3', label: '작업3', minutes: 90 },
+    { id: '1', label: '프리셋1', minutes: 25 },
+    { id: '2', label: '프리셋2', minutes: 50 },
+    { id: '3', label: '프리셋3', minutes: 90 },
   ],
 };
 
@@ -72,7 +72,6 @@ export default function SettingsModal({
   );
   const [tasks, setTasks] = useState<string[]>(DEFAULT_SETTINGS.tasks);
   const [presets, setPresets] = useState<Preset[]>(DEFAULT_SETTINGS.presets);
-  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -160,19 +159,6 @@ const saveToAll = async (newSettings: Settings) => {
     toast.success('설정이 저장되었습니다!');
     onSave();
     onClose();
-  };
-
-  const handleCloseClick = () => {
-    setShowCloseConfirm(true);
-  };
-
-  const handleConfirmClose = async (shouldSave: boolean) => {
-    if (shouldSave) {
-      await handleSave();
-    } else {
-      onClose();
-    }
-    setShowCloseConfirm(false);
   };
 
   const handleResetSettings = async () => {
@@ -279,14 +265,20 @@ const saveToAll = async (newSettings: Settings) => {
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]">
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in"
+        onClick={handleSave}
+      >
+        <div
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]"
+          onClick={(e) => e.stopPropagation()}
+        >
         <div className="flex justify-between items-center p-5 border-b border-gray-100">
           <h2 className="text-gray-500 font-bold tracking-widest text-sm flex items-center gap-2">
             ⚙️ SETTINGS
           </h2>
           <button
-            onClick={handleCloseClick}
+            onClick={handleSave}
             className="text-gray-400 hover:text-gray-600"
           >
             ✕
@@ -297,7 +289,7 @@ const saveToAll = async (newSettings: Settings) => {
           <section>
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-gray-400 text-xs font-bold flex items-center gap-2">
-                🗂️ 작업 목록 (Report 집계용)
+                🗂️ 작업 목록
               </h3>
               <button
                 onClick={addTask}
@@ -336,7 +328,7 @@ const saveToAll = async (newSettings: Settings) => {
           <section>
             <div className="flex justify-between items-end mb-3">
               <h3 className="text-gray-400 text-xs font-bold flex items-center gap-2">
-                🔥 바로가기 버튼 설정 (최대 3개)
+                🔥 뽀모도로 프리셋 설정
               </h3>
               {presets.length < 3 && (
                 <button
@@ -589,39 +581,6 @@ const saveToAll = async (newSettings: Settings) => {
         </div>
       </div>
     </div>
-
-    {showCloseConfirm && (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-fade-in">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
-          <div className="p-5 border-b border-gray-100">
-            <h3 className="text-sm font-bold text-gray-700">변경사항을 저장할까요?</h3>
-            <p className="text-xs text-gray-500 mt-1">
-              닫기 전에 저장하지 않은 설정이 있습니다.
-            </p>
-          </div>
-          <div className="p-4 flex flex-col gap-2">
-            <button
-              onClick={() => handleConfirmClose(true)}
-              className="w-full py-3 rounded-xl bg-gray-800 text-white font-bold hover:bg-gray-900 transition-colors shadow-sm text-sm"
-            >
-              저장하고 닫기
-            </button>
-            <button
-              onClick={() => handleConfirmClose(false)}
-              className="w-full py-3 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition-colors text-sm"
-            >
-              저장하지 않고 닫기
-            </button>
-            <button
-              onClick={() => setShowCloseConfirm(false)}
-              className="w-full py-3 rounded-xl text-gray-400 font-bold hover:text-gray-600 transition-colors text-sm"
-            >
-              계속 편집하기
-            </button>
-          </div>
-        </div>
-      </div>
-      )}
     </>
   );
 }

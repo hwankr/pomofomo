@@ -11,8 +11,13 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#f43f5e', // 우리가 쓰는 Rose-500 색상
     icons: [
       {
-        src: '/icon',
+        src: '/icon.png',
         sizes: 'any',
+        type: 'image/png',
+      },
+      {
+        src: '/favicon.ico',
+        sizes: '64x64',
         type: 'image/x-icon',
       },
     ],
