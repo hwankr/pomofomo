@@ -347,7 +347,7 @@ export default function TimerApp({
 
       if (settings.taskPopupEnabled) {
         setPendingRecord({ mode: recordMode, duration, onAfterSave });
-        setSelectedTask(settings.tasks[0] ?? '');
+        setSelectedTask('');
         setTaskModalOpen(true);
       } else {
         await saveRecord(recordMode, duration);
