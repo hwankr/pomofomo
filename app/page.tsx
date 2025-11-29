@@ -11,6 +11,7 @@ import ReportModal from '@/components/ReportModal';
 import SettingsModal from '@/components/SettingsModal';
 import { Toaster, toast } from 'react-hot-toast';
 import appIcon from './icon.png';
+import { isInAppBrowser, handleInAppBrowser } from '@/lib/userAgent';
 
 export default function Home() {
   const [session, setSession] = useState<Session | null>(null);
@@ -50,6 +51,19 @@ export default function Home() {
   }, []);
 
   const handleGoogleLogin = async () => {
+    if (isInAppBrowser()) {
+      const handled = handleInAppBrowser();
+      if (handled) {
+        toast.error(
+          '구글 로그인은 보안 정책상\n외부 브라우저(크롬, 사파리 등)에서\n진행해야 합니다.',
+          {
+            duration: 5000,
+          }
+        );
+        return;
+      }
+    }
+
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin },

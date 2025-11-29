@@ -3,8 +3,18 @@
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 
+import { isInAppBrowser, handleInAppBrowser } from '@/lib/userAgent';
+
 export default function Login() {
   const handleLogin = async () => {
+    if (isInAppBrowser()) {
+      const handled = handleInAppBrowser();
+      if (handled) {
+        alert('구글 로그인은 보안 정책상 외부 브라우저(크롬, 사파리 등)에서 진행해야 합니다.');
+        return;
+      }
+    }
+
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
