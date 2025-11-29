@@ -88,7 +88,6 @@ export default function TimerApp({
     volume: 50,
     isMuted: false,
     taskPopupEnabled: true,
-    tasks: ['국어', '수학', '영어'],
     presets: [
       { id: '1', label: '작업1', minutes: 25 },
       { id: '2', label: '작업2', minutes: 50 },
@@ -99,6 +98,7 @@ export default function TimerApp({
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null); // ✨ [New] Selected Task ID
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // ✨ [New] Dropdown State
   const [dbTasks, setDbTasks] = useState<{ id: string; title: string }[]>([]); // ✨ [New] Tasks from DB
   const [pendingRecord, setPendingRecord] = useState<
     { mode: string; duration: number; onAfterSave?: () => void } | null
@@ -178,10 +178,6 @@ export default function TimerApp({
           ...parsed,
           taskPopupEnabled:
             parsed.taskPopupEnabled ?? prev.taskPopupEnabled ?? true,
-          tasks:
-            parsed.tasks && parsed.tasks.length > 0
-              ? parsed.tasks
-              : prev.tasks,
           presets:
             parsed.presets && parsed.presets.length > 0
               ? parsed.presets
@@ -908,20 +904,7 @@ export default function TimerApp({
                   />
                 </div>
 
-                {/* Existing Presets */}
-                {settings.tasks.length > 0 && dbTasks.length === 0 && (
-                   <div className="flex flex-wrap gap-2 mt-2">
-                    {settings.tasks.map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => setSelectedTask(t)}
-                        className="px-3 py-1.5 bg-gray-100 dark:bg-slate-700 rounded-lg text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                {/* Legacy Presets Removed */}
               </div>
 
               <div className="flex gap-3 mt-8">
@@ -1025,47 +1008,95 @@ export default function TimerApp({
               </button>
             </div>
 
-            {/* ✨ [New] Task Selector in Main View */}
+            {/* ✨ [New] Custom Task Selector Dropdown */}
             <div className="mb-8 w-full max-w-xs mx-auto relative z-20">
               {dbTasks.length > 0 ? (
-                <div className="relative group">
-                  <select
-                    value={selectedTaskId || ''}
-                    onChange={(e) => {
-                      const id = e.target.value;
-                      if (id === '') {
-                        setSelectedTaskId(null);
-                        setSelectedTask('');
-                      } else {
-                        const task = dbTasks.find((t) => t.id === id);
-                        if (task) {
-                          setSelectedTaskId(task.id);
-                          setSelectedTask(task.title);
-                        }
-                      }
-                    }}
-                    className={`w-full appearance-none cursor-pointer py-3 pl-4 pr-10 rounded-xl text-sm font-bold border-2 transition-all outline-none ${
+                <div className="relative">
+                  {/* Dropdown Toggle Button */}
+                  <button
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl text-sm font-bold border-2 transition-all duration-200 outline-none ${
                       selectedTaskId
-                        ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400'
-                        : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-slate-600'
+                        ? `bg-white dark:bg-slate-800 ${
+                            timerMode === 'focus'
+                              ? 'border-rose-200 text-rose-500 dark:border-rose-900/50 dark:text-rose-400'
+                              : timerMode === 'shortBreak'
+                              ? 'border-emerald-200 text-emerald-500 dark:border-emerald-900/50 dark:text-emerald-400'
+                              : 'border-indigo-200 text-indigo-500 dark:border-indigo-900/50 dark:text-indigo-400'
+                          } shadow-sm`
+                        : 'bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700 text-gray-400 dark:text-gray-500 hover:border-gray-200 dark:hover:border-slate-600'
                     }`}
                   >
-                    <option value="">작업 선택 안 함</option>
-                    {dbTasks.map((task) => (
-                      <option key={task.id} value={task.id}>
-                        {task.title}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    <span className="truncate">
+                      {selectedTaskId
+                        ? dbTasks.find((t) => t.id === selectedTaskId)?.title
+                        : '작업을 선택하세요'}
+                    </span>
+                    <svg
+                      className={`w-4 h-4 transition-transform duration-200 ${
+                        isDropdownOpen ? 'rotate-180' : ''
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2.5"
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
-                  </div>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isDropdownOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setIsDropdownOpen(false)}
+                      />
+                      <div className="absolute top-full left-0 right-0 mt-2 p-2 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 z-20 animate-in fade-in zoom-in-95 duration-100 origin-top">
+                        <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-1">
+                          <button
+                            onClick={() => {
+                              setSelectedTaskId(null);
+                              setSelectedTask('');
+                              setIsDropdownOpen(false);
+                            }}
+                            className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
+                          >
+                            선택 안 함
+                          </button>
+                          {dbTasks.map((task) => (
+                            <button
+                              key={task.id}
+                              onClick={() => {
+                                setSelectedTaskId(task.id);
+                                setSelectedTask(task.title);
+                                setIsDropdownOpen(false);
+                              }}
+                              className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-colors ${
+                                selectedTaskId === task.id
+                                  ? timerMode === 'focus'
+                                    ? 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'
+                                    : timerMode === 'shortBreak'
+                                    ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
+                                    : 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400'
+                                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700/50'
+                              }`}
+                            >
+                              {task.title}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : (
-                <div className="text-xs text-gray-400 text-center py-2">
-                  오늘의 할 일이 없습니다.
+                <div className="text-xs text-gray-400 text-center py-2 font-medium bg-gray-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-gray-200 dark:border-slate-700">
+                  오늘의 할 일이 없습니다
                 </div>
               )}
             </div>
