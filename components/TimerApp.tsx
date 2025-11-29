@@ -285,7 +285,10 @@ export default function TimerApp({
   // ✨ onRecordSaved 사용
   const saveRecord = useCallback(
     async (recordMode: string, duration: number, taskText = '') => {
-      if (duration < 10) return;
+      if (duration < 10) {
+        toast.error('10초 미만은 저장되지 않습니다.');
+        return;
+      }
 
       const formatDurationForToast = (totalSeconds: number) => {
         const minutes = Math.floor(totalSeconds / 60);
@@ -343,7 +346,10 @@ export default function TimerApp({
       duration: number,
       onAfterSave?: () => void
     ) => {
-      if (duration < 10) return;
+      if (duration < 10) {
+        toast.error('10초 미만은 저장되지 않습니다.');
+        return;
+      }
 
       if (settings.taskPopupEnabled) {
         setPendingRecord({ mode: recordMode, duration, onAfterSave });
