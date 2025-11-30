@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import Image from 'next/image';
+import Link from 'next/link';
 import TimerApp from '@/components/TimerApp';
 import HistoryList from '@/components/HistoryList';
 import LoginModal from '@/components/LoginModal';
@@ -121,6 +122,14 @@ export default function Home() {
               >
                 {isDarkMode ? '☀️' : '🌙'}
               </button>
+
+              <Link
+                href="/plan"
+                className={headerBtnStyle}
+              >
+                <span className="text-xl">📅</span>
+                <span className="hidden sm:inline">Plan</span>
+              </Link>
 
               <button
                 onClick={() => {
