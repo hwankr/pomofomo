@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import TaskSidebar from './TaskSidebar';
 
 const formatTime = (seconds: number) => {
   const h = Math.floor(seconds / 3600);
@@ -98,7 +99,7 @@ export default function TimerApp({
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null); // ✨ [New] Selected Task ID
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // ✨ [New] Dropdown State
+  const [isTaskSidebarOpen, setIsTaskSidebarOpen] = useState(false); // ✨ [New] Sidebar State
   const [dbTasks, setDbTasks] = useState<{ id: string; title: string }[]>([]); // ✨ [New] Tasks from DB
   const [pendingRecord, setPendingRecord] = useState<
     { mode: string; duration: number; onAfterSave?: () => void } | null
@@ -945,27 +946,70 @@ export default function TimerApp({
             isAnyRunning ? `ring-2 ${theme.ring} shadow-2xl scale-[1.02]` : ''
           }`}
         >
-      <div className="flex p-1 bg-gray-100 dark:bg-slate-900/50 m-2 rounded-2xl">
+      <div className="flex items-center gap-2 m-2">
+        <div className="flex-1 flex p-1 bg-gray-100 dark:bg-slate-900/50 rounded-2xl">
+          <button
+            onClick={() => setTab('timer')}
+            className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${
+              tab === 'timer'
+                ? 'bg-white dark:bg-slate-800 text-gray-700 dark:text-white shadow-sm'
+                : 'text-gray-400 dark:text-gray-500'
+            }`}
+          >
+            타이머
+          </button>
+          <button
+            onClick={() => setTab('stopwatch')}
+            className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${
+              tab === 'stopwatch'
+                ? 'bg-white dark:bg-slate-800 text-gray-700 dark:text-white shadow-sm'
+                : 'text-gray-400 dark:text-gray-500'
+            }`}
+          >
+            스톱워치
+          </button>
+        </div>
+
         <button
-          onClick={() => setTab('timer')}
-          className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${
-            tab === 'timer'
-              ? 'bg-white dark:bg-slate-800 text-gray-700 dark:text-white shadow-sm'
-              : 'text-gray-400 dark:text-gray-500'
+          onClick={() => setIsTaskSidebarOpen(true)}
+          className={`p-4 rounded-2xl transition-all shadow-sm border ${
+            selectedTaskId
+              ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-500 dark:text-rose-400 border-rose-100 dark:border-rose-900/50'
+              : 'bg-white dark:bg-slate-800 text-gray-400 dark:text-gray-500 border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700'
           }`}
+          title="Select Task"
         >
-          타이머
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+            className="w-5 h-5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 17.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
+            />
+          </svg>
         </button>
-        <button
-          onClick={() => setTab('stopwatch')}
-          className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${
-            tab === 'stopwatch'
-              ? 'bg-white dark:bg-slate-800 text-gray-700 dark:text-white shadow-sm'
-              : 'text-gray-400 dark:text-gray-500'
-          }`}
-        >
-          스톱워치
-        </button>
+
+        <TaskSidebar
+          isOpen={isTaskSidebarOpen}
+          onClose={() => setIsTaskSidebarOpen(false)}
+          tasks={dbTasks}
+          selectedTaskId={selectedTaskId}
+          onSelectTask={(task) => {
+            if (task) {
+              setSelectedTask(task.title);
+              setSelectedTaskId(task.id);
+            } else {
+              setSelectedTask('');
+              setSelectedTaskId(null);
+            }
+          }}
+        />
       </div>
 
       <div
@@ -1008,95 +1052,29 @@ export default function TimerApp({
               </button>
             </div>
 
-            {/* ✨ [New] Custom Task Selector Dropdown */}
-            <div className="mb-8 w-full max-w-xs mx-auto relative z-20">
-              {dbTasks.length > 0 ? (
-                <div className="relative">
-                  {/* Dropdown Toggle Button */}
+            {/* ✨ [New] Selected Task Display */}
+            <div className={`w-full max-w-xs mx-auto relative z-20 flex justify-center transition-all duration-300 ${selectedTaskId ? 'mb-6 min-h-[24px]' : 'mb-0 h-0'}`}>
+              {selectedTaskId && (
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50 animate-fade-in">
+                  <span className="text-sm font-medium max-w-[200px] truncate">
+                    {dbTasks.find((t) => t.id === selectedTaskId)?.title}
+                  </span>
                   <button
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl text-sm font-bold border-2 transition-all duration-200 outline-none ${
-                      selectedTaskId
-                        ? `bg-white dark:bg-slate-800 ${
-                            timerMode === 'focus'
-                              ? 'border-rose-200 text-rose-500 dark:border-rose-900/50 dark:text-rose-400'
-                              : timerMode === 'shortBreak'
-                              ? 'border-emerald-200 text-emerald-500 dark:border-emerald-900/50 dark:text-emerald-400'
-                              : 'border-indigo-200 text-indigo-500 dark:border-indigo-900/50 dark:text-indigo-400'
-                          } shadow-sm`
-                        : 'bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700 text-gray-400 dark:text-gray-500 hover:border-gray-200 dark:hover:border-slate-600'
-                    }`}
+                    onClick={() => {
+                      setSelectedTaskId(null);
+                      setSelectedTask('');
+                    }}
+                    className="p-0.5 hover:bg-rose-100 dark:hover:bg-rose-800/50 rounded-full transition-colors"
                   >
-                    <span className="truncate">
-                      {selectedTaskId
-                        ? dbTasks.find((t) => t.id === selectedTaskId)?.title
-                        : '작업을 선택하세요'}
-                    </span>
                     <svg
-                      className={`w-4 h-4 transition-transform duration-200 ${
-                        isDropdownOpen ? 'rotate-180' : ''
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="w-4 h-4"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2.5"
-                        d="M19 9l-7 7-7-7"
-                      />
+                      <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
                     </svg>
                   </button>
-
-                  {/* Dropdown Menu */}
-                  {isDropdownOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-10"
-                        onClick={() => setIsDropdownOpen(false)}
-                      />
-                      <div className="absolute top-full left-0 right-0 mt-2 p-2 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 z-20 animate-in fade-in zoom-in-95 duration-100 origin-top">
-                        <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-1">
-                          <button
-                            onClick={() => {
-                              setSelectedTaskId(null);
-                              setSelectedTask('');
-                              setIsDropdownOpen(false);
-                            }}
-                            className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
-                          >
-                            선택 안 함
-                          </button>
-                          {dbTasks.map((task) => (
-                            <button
-                              key={task.id}
-                              onClick={() => {
-                                setSelectedTaskId(task.id);
-                                setSelectedTask(task.title);
-                                setIsDropdownOpen(false);
-                              }}
-                              className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-colors ${
-                                selectedTaskId === task.id
-                                  ? timerMode === 'focus'
-                                    ? 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'
-                                    : timerMode === 'shortBreak'
-                                    ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
-                                    : 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400'
-                                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700/50'
-                              }`}
-                            >
-                              {task.title}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ) : (
-                <div className="text-xs text-gray-400 text-center py-2 font-medium bg-gray-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-gray-200 dark:border-slate-700">
-                  오늘의 할 일이 없습니다
                 </div>
               )}
             </div>
