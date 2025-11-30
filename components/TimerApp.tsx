@@ -101,6 +101,8 @@ export default function TimerApp({
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null); // ✨ [New] Selected Task ID
   const [isTaskSidebarOpen, setIsTaskSidebarOpen] = useState(false); // ✨ [New] Sidebar State
   const [dbTasks, setDbTasks] = useState<{ id: string; title: string }[]>([]); // ✨ [New] Tasks from DB
+  const [weeklyPlans, setWeeklyPlans] = useState<{ id: string; title: string }[]>([]); // ✨ [New] Weekly Plans from DB
+  const [monthlyPlans, setMonthlyPlans] = useState<{ id: string; title: string }[]>([]); // ✨ [New] Monthly Plans from DB
   const [pendingRecord, setPendingRecord] = useState<
     { mode: string; duration: number; onAfterSave?: () => void } | null
   >(null);
@@ -112,15 +114,39 @@ export default function TimerApp({
       if (!user) return;
 
       const today = new Date().toISOString().split('T')[0];
-      const { data } = await supabase
+      
+      // Fetch daily tasks
+      const { data: tasksData } = await supabase
         .from('tasks')
         .select('id, title')
         .eq('user_id', user.id)
         .eq('due_date', today)
         .neq('status', 'done');
 
-      if (data) {
-        setDbTasks(data);
+      if (tasksData) {
+        setDbTasks(tasksData);
+      }
+
+      // ✨ [New] Fetch weekly plans
+      const { data: weeklyData } = await supabase
+        .from('weekly_plans')
+        .select('id, title')
+        .eq('user_id', user.id)
+        .neq('status', 'done');
+
+      if (weeklyData) {
+        setWeeklyPlans(weeklyData);
+      }
+
+      // ✨ [New] Fetch monthly plans
+      const { data: monthlyData } = await supabase
+        .from('monthly_plans')
+        .select('id, title')
+        .eq('user_id', user.id)
+        .neq('status', 'done');
+
+      if (monthlyData) {
+        setMonthlyPlans(monthlyData);
       }
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -999,6 +1025,8 @@ export default function TimerApp({
           isOpen={isTaskSidebarOpen}
           onClose={() => setIsTaskSidebarOpen(false)}
           tasks={dbTasks}
+          weeklyPlans={weeklyPlans}
+          monthlyPlans={monthlyPlans} // ✨ [New] Pass monthly plans
           selectedTaskId={selectedTaskId}
           onSelectTask={(task) => {
             if (task) {

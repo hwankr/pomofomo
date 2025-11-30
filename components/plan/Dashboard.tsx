@@ -6,6 +6,8 @@ import { format } from 'date-fns';
 import Calendar from './Calendar';
 import TaskList from './TaskList';
 import Timeline from './Timeline';
+import WeeklyPlan from './WeeklyPlan';
+import MonthlyPlan from './MonthlyPlan';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -44,7 +46,7 @@ export default function Dashboard({ session }: DashboardProps) {
 
     fetchFocusTime();
     
-    // ✨ [New] Real-time subscription
+    // Real-time subscription
     const channel = supabase
       .channel('dashboard-updates')
       .on(
@@ -114,18 +116,19 @@ export default function Dashboard({ session }: DashboardProps) {
       </header>
 
       <main className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left Column: Calendar */}
-          <div className="lg:col-span-5 xl:col-span-4 space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+          {/* Left Column Wrapper */}
+          <div className="contents lg:flex lg:flex-col lg:col-span-4 lg:space-y-6">
+            {/* 1. Calendar */}
+            <div className="order-1 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
               <Calendar
                 selectedDate={selectedDate}
                 onSelectDate={setSelectedDate}
               />
             </div>
             
-            {/* Stats Card */}
-            <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl p-6 border border-indigo-100 dark:border-indigo-800/50">
+            {/* 2. Daily Focus */}
+            <div className="order-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl p-6 border border-indigo-100 dark:border-indigo-800/50">
               <h3 className="text-indigo-900 dark:text-indigo-100 font-semibold mb-2">Daily Focus</h3>
               <p className="text-indigo-600 dark:text-indigo-300 text-sm">
                 You focused for <span className="font-bold text-2xl block mt-2">{formatDuration(focusTime)}</span>
@@ -134,13 +137,16 @@ export default function Dashboard({ session }: DashboardProps) {
               </p>
             </div>
             
-            {/* Timeline */}
-            <Timeline selectedDate={selectedDate} userId={session?.user?.id || ''} />
+            {/* 4. Timeline */}
+            <div className="order-4">
+              <Timeline selectedDate={selectedDate} userId={session?.user?.id || ''} />
+            </div>
           </div>
 
-          {/* Right Column: Tasks */}
-          <div className="lg:col-span-7 xl:col-span-8">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 min-h-[600px] flex flex-col">
+          {/* Right Column Wrapper */}
+          <div className="contents lg:flex lg:flex-col lg:col-span-8 lg:space-y-6">
+            {/* 3. Daily Task */}
+            <div className="order-3 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 min-h-[600px] flex flex-col">
               <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                 <div>
                   <h2 className="text-2xl font-bold">
@@ -154,6 +160,16 @@ export default function Dashboard({ session }: DashboardProps) {
               
               <div className="flex-1 p-6">
                 <TaskList selectedDate={selectedDate} userId={session?.user?.id || ''} />
+              </div>
+            </div>
+
+            {/* 5. Goals Section (Weekly & Monthly) */}
+            <div className="order-5 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <WeeklyPlan userId={session?.user?.id || ''} />
+              </div>
+              <div>
+                <MonthlyPlan userId={session?.user?.id || ''} />
               </div>
             </div>
           </div>
