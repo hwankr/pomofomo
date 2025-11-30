@@ -1151,6 +1151,33 @@ export default function TimerApp({
               스톱워치
             </div>
 
+            {/* ✨ [New] Selected Task Display for Stopwatch */}
+            <div className={`w-full max-w-xs mx-auto relative z-20 flex justify-center transition-all duration-300 ${selectedTaskId ? 'mb-6 min-h-[24px]' : 'mb-0 h-0'}`}>
+              {selectedTaskId && (
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50 animate-fade-in">
+                  <span className="text-sm font-medium max-w-[200px] truncate">
+                    {dbTasks.find((t) => t.id === selectedTaskId)?.title}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setSelectedTaskId(null);
+                      setSelectedTask('');
+                    }}
+                    className="p-0.5 hover:bg-indigo-100 dark:hover:bg-indigo-800/50 rounded-full transition-colors"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="w-4 h-4"
+                    >
+                      <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div className="text-7xl sm:text-8xl font-bold mb-10 font-mono tracking-tighter text-indigo-500 dark:text-indigo-400">
               {formatTime(stopwatchTime)}
             </div>
