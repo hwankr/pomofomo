@@ -81,21 +81,25 @@ export default function AddFriend({ session, onFriendAdded }: AddFriendProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Enter email address"
-          className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
           required
         />
       </div>
       
       {message && (
-        <p className={`text-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+        <div className={`text-sm p-3 rounded-lg ${
+          message.type === 'success' 
+            ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' 
+            : 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'
+        }`}>
           {message.text}
-        </p>
+        </div>
       )}
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
       >
         {loading ? 'Sending...' : 'Send Request'}
       </button>

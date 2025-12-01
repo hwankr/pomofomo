@@ -77,25 +77,25 @@ export default function FriendRequestList({ session, refreshTrigger, onUpdate }:
   }
 
   return (
-    <ul className="space-y-4">
+    <ul className="space-y-3">
       {requests.map((req) => (
-        <li key={req.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-          <div className="mb-2 sm:mb-0">
+        <li key={req.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl hover:border-indigo-100 dark:hover:border-indigo-900 transition-colors">
+          <div className="mb-3 sm:mb-0">
             <p className="font-medium text-gray-900 dark:text-white">{req.sender_email}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               {new Date(req.created_at).toLocaleDateString()}
             </p>
           </div>
-          <div className="flex space-x-2">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => handleAccept(req.id)}
-              className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors"
+              className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:text-indigo-400 text-sm font-medium rounded-lg transition-colors"
             >
               Accept
             </button>
             <button
               onClick={() => handleReject(req.id)}
-              className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors"
+              className="px-3 py-1.5 text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-sm font-medium rounded-lg transition-colors"
             >
               Reject
             </button>
