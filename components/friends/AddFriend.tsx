@@ -22,48 +22,18 @@ export default function AddFriend({ session, onFriendAdded }: AddFriendProps) {
     setMessage(null);
 
     try {
-      // 1. Get User ID by email
-      const { data: userId, error: userError } = await supabase.rpc('get_user_id_by_email', {
-        email_input: email,
+      const { error } = await supabase.rpc('send_friend_request', {
+        receiver_email: email,
       });
 
-      if (userError) throw userError;
-      if (!userId) {
-        setMessage({ type: 'error', text: 'User not found with this email.' });
-        setLoading(false);
-        return;
-      }
+      if (error) throw error;
 
-      if (userId === session.user.id) {
-        setMessage({ type: 'error', text: 'You cannot add yourself.' });
-        setLoading(false);
-        return;
-      }
-
-      // 2. Send Friend Request
-      const { error: requestError } = await supabase
-        .from('friend_requests')
-        .insert({
-          sender_id: session.user.id,
-          receiver_id: userId,
-          sender_email: session.user.email,
-          receiver_email: email,
-        });
-
-      if (requestError) {
-        if (requestError.code === '23505') { // Unique violation
-          setMessage({ type: 'error', text: 'Friend request already sent or exists.' });
-        } else {
-          throw requestError;
-        }
-      } else {
-        setMessage({ type: 'success', text: 'Friend request sent!' });
-        setEmail('');
-        onFriendAdded();
-      }
+      setMessage({ type: 'success', text: 'Friend request sent!' });
+      setEmail('');
+      onFriendAdded();
     } catch (error: any) {
       console.error('Error adding friend:', error);
-      setMessage({ type: 'error', text: 'Failed to send request. ' + (error.message || '') });
+      setMessage({ type: 'error', text: error.message || 'Failed to send request.' });
     } finally {
       setLoading(false);
     }
@@ -85,13 +55,12 @@ export default function AddFriend({ session, onFriendAdded }: AddFriendProps) {
           required
         />
       </div>
-      
+
       {message && (
-        <div className={`text-sm p-3 rounded-lg ${
-          message.type === 'success' 
-            ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' 
+        <div className={`text-sm p-3 rounded-lg ${message.type === 'success'
+            ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
             : 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'
-        }`}>
+          }`}>
           {message.text}
         </div>
       )}

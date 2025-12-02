@@ -130,7 +130,7 @@ export default function FriendList({ session, refreshTrigger }: FriendListProps)
 
       if (error) throw error;
 
-      setFriends(prev => prev.map(f => 
+      setFriends(prev => prev.map(f =>
         f.id === id ? { ...f, nickname: editName.trim() || null } : f
       ));
       setEditingId(null);
@@ -185,7 +185,7 @@ export default function FriendList({ session, refreshTrigger }: FriendListProps)
         <li key={friend.id} className="group flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl hover:border-indigo-100 dark:hover:border-indigo-900 transition-colors">
           <div className="flex items-center gap-3 w-full">
             <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-medium text-sm shrink-0">
-              {(friend.nickname || friend.friend_email)[0].toUpperCase()}
+              {(friend.nickname || friend.friend_email || '?')[0].toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
@@ -218,7 +218,7 @@ export default function FriendList({ session, refreshTrigger }: FriendListProps)
                 ) : (
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-gray-900 dark:text-white truncate">
-                      {friend.nickname || friend.friend_email}
+                      {friend.nickname || friend.friend_email || 'Unknown User'}
                     </p>
                     {friend.nickname && (
                       <span className="text-xs text-gray-400 dark:text-gray-500 truncate">

@@ -38,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
       <body className={`${inter.className} flex flex-col min-h-screen`}>
         <main className="flex-grow">{children}</main>
         <Footer />
