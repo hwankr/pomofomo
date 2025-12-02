@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Session } from '@supabase/supabase-js';
-import { Menu, X, Sun, Moon, Settings, Flag, LogOut, User as UserIcon } from 'lucide-react';
+import { Menu, X, Sun, Moon, Settings, Flag, LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
 import appIcon from '@/app/icon.png';
+import { usePathname } from 'next/navigation';
 
 interface NavbarProps {
     session: Session | null;
@@ -28,6 +29,17 @@ export default function Navbar({
 }: NavbarProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+    const pathname = usePathname();
+
+    // Scroll effect for glassmorphism intensity
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 10);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const navLinks = [
         { href: '/plan', label: 'Plan' },
@@ -38,249 +50,283 @@ export default function Navbar({
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
     return (
-        <nav className="w-full bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 sticky top-0 z-50 transition-colors duration-300">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between h-16">
-                    {/* Logo & Desktop Nav */}
-                    <div className="flex items-center">
-                        <Link href="/" className="flex-shrink-0 flex items-center gap-2">
-                            <Image
-                                src={appIcon}
-                                alt="Pomofomo"
-                                width={32}
-                                height={32}
-                                className="rounded-lg"
-                            />
-                            <span className="text-xl font-bold text-gray-900 dark:text-white hidden sm:block">
-                                Pomofomo
-                            </span>
-                        </Link>
-
-                        {/* Desktop Navigation Links */}
-                        <div className="hidden md:flex ml-10 space-x-8">
-                            {navLinks.map((link) => (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                                >
-                                    {link.label}
-                                </Link>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Right Side Icons (Desktop) */}
-                    <div className="hidden md:flex items-center gap-4">
-                        <button
-                            onClick={toggleDarkMode}
-                            className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-slate-800 transition-colors"
-                            aria-label="Toggle Dark Mode"
-                        >
-                            {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                        </button>
-
-                        {onOpenReport && (
-                            <button
-                                onClick={onOpenReport}
-                                className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-slate-800 transition-colors"
-                                aria-label="Report"
-                            >
-                                <Flag className="w-5 h-5" />
-                            </button>
-                        )}
-
-                        {onOpenSettings && (
-                            <button
-                                onClick={onOpenSettings}
-                                className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-slate-800 transition-colors"
-                                aria-label="Settings"
-                            >
-                                <Settings className="w-5 h-5" />
-                            </button>
-                        )}
-
-                        {session ? (
-                            <div className="relative ml-3">
-                                <button
-                                    onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                                    className="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                >
+        <>
+            <nav
+                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${scrolled
+                        ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-gray-200/50 dark:border-slate-700/50 shadow-sm'
+                        : 'bg-transparent border-transparent'
+                    }`}
+            >
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between h-16 items-center">
+                        {/* Logo & Desktop Nav */}
+                        <div className="flex items-center gap-8">
+                            <Link href="/" className="flex-shrink-0 flex items-center gap-2 group">
+                                <div className="relative w-8 h-8 overflow-hidden rounded-xl shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-105">
                                     <Image
-                                        src={
-                                            session.user.user_metadata.avatar_url ||
-                                            `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                                                session.user.email?.split('@')[0] || 'User'
-                                            )}&background=random&color=fff`
-                                        }
-                                        alt="User"
-                                        width={32}
-                                        height={32}
-                                        className="h-8 w-8 rounded-full object-cover border border-gray-200 dark:border-slate-700"
+                                        src={appIcon}
+                                        alt="Pomofomo"
+                                        fill
+                                        className="object-cover"
                                     />
-                                </button>
-
-                                {isProfileMenuOpen && (
-                                    <>
-                                        <div
-                                            className="fixed inset-0 z-10 cursor-default"
-                                            onClick={() => setIsProfileMenuOpen(false)}
-                                        ></div>
-                                        <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-slate-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
-                                            <div className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-slate-700 mb-1">
-                                                {session.user.email}
-                                            </div>
-                                            <button
-                                                onClick={() => {
-                                                    setIsProfileMenuOpen(false);
-                                                    onLogout?.();
-                                                }}
-                                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-2"
-                                            >
-                                                <LogOut className="w-4 h-4" />
-                                                Sign out
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        ) : (
-                            <button
-                                onClick={onOpenLogin}
-                                className="bg-gray-900 text-white dark:bg-white dark:text-gray-900 px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-                            >
-                                Sign In
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Mobile Menu Button */}
-                    <div className="flex items-center md:hidden">
-                        <button
-                            onClick={toggleMenu}
-                            className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
-                        >
-                            <span className="sr-only">Open main menu</span>
-                            {isMenuOpen ? (
-                                <X className="block h-6 w-6" aria-hidden="true" />
-                            ) : (
-                                <Menu className="block h-6 w-6" aria-hidden="true" />
-                            )}
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Mobile Menu */}
-            {isMenuOpen && (
-                <div className="md:hidden bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 animate-fade-in">
-                    <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                onClick={() => setIsMenuOpen(false)}
-                                className="text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-slate-800 block px-3 py-2 rounded-md text-base font-medium"
-                            >
-                                {link.label}
+                                </div>
+                                <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-rose-500 to-orange-500 hidden sm:block">
+                                    Pomofomo
+                                </span>
                             </Link>
-                        ))}
-                    </div>
 
-                    <div className="pt-4 pb-4 border-t border-gray-200 dark:border-slate-800">
-                        <div className="flex items-center px-5 mb-3">
-                            {session ? (
-                                <div className="flex-shrink-0">
-                                    <Image
-                                        src={
-                                            session.user.user_metadata.avatar_url ||
-                                            `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                                                session.user.email?.split('@')[0] || 'User'
-                                            )}&background=random&color=fff`
-                                        }
-                                        alt="User"
-                                        width={40}
-                                        height={40}
-                                        className="h-10 w-10 rounded-full object-cover"
-                                    />
-                                </div>
-                            ) : (
-                                <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-slate-700 flex items-center justify-center">
-                                    <UserIcon className="w-6 h-6 text-gray-500 dark:text-gray-400" />
-                                </div>
-                            )}
-                            <div className="ml-3">
-                                <div className="text-base font-medium leading-none text-gray-800 dark:text-white">
-                                    {session ? session.user.email?.split('@')[0] : 'Guest'}
-                                </div>
-                                <div className="text-sm font-medium leading-none text-gray-500 dark:text-gray-400 mt-1">
-                                    {session ? session.user.email : 'Please sign in'}
-                                </div>
+                            {/* Desktop Navigation Links */}
+                            <div className="hidden md:flex space-x-1">
+                                {navLinks.map((link) => {
+                                    const isActive = pathname === link.href;
+                                    return (
+                                        <Link
+                                            key={link.href}
+                                            href={link.href}
+                                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${isActive
+                                                    ? 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'
+                                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-slate-800/50'
+                                                }`}
+                                        >
+                                            {link.label}
+                                        </Link>
+                                    );
+                                })}
                             </div>
                         </div>
 
-                        <div className="px-2 space-y-1">
+                        {/* Right Side Icons (Desktop) */}
+                        <div className="hidden md:flex items-center gap-3">
                             <button
                                 onClick={toggleDarkMode}
-                                className="w-full text-left flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-slate-800"
+                                className="p-2.5 rounded-full text-gray-500 hover:bg-gray-100 hover:text-amber-500 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-yellow-400 transition-all duration-200"
+                                aria-label="Toggle Dark Mode"
                             >
-                                {isDarkMode ? <Sun className="w-5 h-5 mr-3" /> : <Moon className="w-5 h-5 mr-3" />}
-                                {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                                {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                             </button>
-
-                            {onOpenSettings && (
-                                <button
-                                    onClick={() => {
-                                        setIsMenuOpen(false);
-                                        onOpenSettings();
-                                    }}
-                                    className="w-full text-left flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-slate-800"
-                                >
-                                    <Settings className="w-5 h-5 mr-3" />
-                                    Settings
-                                </button>
-                            )}
 
                             {onOpenReport && (
                                 <button
-                                    onClick={() => {
-                                        setIsMenuOpen(false);
-                                        onOpenReport();
-                                    }}
-                                    className="w-full text-left flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-slate-800"
+                                    onClick={onOpenReport}
+                                    className="p-2.5 rounded-full text-gray-500 hover:bg-gray-100 hover:text-rose-500 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-rose-400 transition-all duration-200"
+                                    aria-label="Report"
                                 >
-                                    <Flag className="w-5 h-5 mr-3" />
-                                    Report Issue
+                                    <Flag className="w-5 h-5" />
                                 </button>
                             )}
 
-                            {session ? (
+                            {onOpenSettings && (
                                 <button
-                                    onClick={() => {
-                                        setIsMenuOpen(false);
-                                        onLogout?.();
-                                    }}
-                                    className="w-full text-left flex items-center px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                    onClick={onOpenSettings}
+                                    className="p-2.5 rounded-full text-gray-500 hover:bg-gray-100 hover:text-indigo-500 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-indigo-400 transition-all duration-200"
+                                    aria-label="Settings"
                                 >
-                                    <LogOut className="w-5 h-5 mr-3" />
-                                    Sign out
+                                    <Settings className="w-5 h-5" />
                                 </button>
+                            )}
+
+                            <div className="h-6 w-px bg-gray-200 dark:bg-slate-700 mx-1"></div>
+
+                            {session ? (
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                                        className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-gray-50 dark:hover:bg-slate-800 transition-all duration-200 border border-transparent hover:border-gray-200 dark:hover:border-slate-700"
+                                    >
+                                        <div className="relative w-8 h-8 rounded-full overflow-hidden border border-gray-200 dark:border-slate-600 shadow-sm">
+                                            <Image
+                                                src={
+                                                    session.user.user_metadata.avatar_url ||
+                                                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                                        session.user.email?.split('@')[0] || 'User'
+                                                    )}&background=random&color=fff`
+                                                }
+                                                alt="User"
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        </div>
+                                        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+
+                                    {isProfileMenuOpen && (
+                                        <>
+                                            <div
+                                                className="fixed inset-0 z-10 cursor-default"
+                                                onClick={() => setIsProfileMenuOpen(false)}
+                                            ></div>
+                                            <div className="absolute right-0 mt-2 w-56 rounded-2xl shadow-xl py-2 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 ring-1 ring-black ring-opacity-5 focus:outline-none z-20 animate-in fade-in zoom-in-95 duration-200">
+                                                <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-700 mb-1">
+                                                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                                        {session.user.email?.split('@')[0]}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                                        {session.user.email}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        setIsProfileMenuOpen(false);
+                                                        onLogout?.();
+                                                    }}
+                                                    className="w-full text-left px-4 py-2.5 text-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2 transition-colors"
+                                                >
+                                                    <LogOut className="w-4 h-4" />
+                                                    Sign out
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
                             ) : (
                                 <button
-                                    onClick={() => {
-                                        setIsMenuOpen(false);
-                                        onOpenLogin?.();
-                                    }}
-                                    className="w-full text-left flex items-center px-3 py-2 rounded-md text-base font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/20"
+                                    onClick={onOpenLogin}
+                                    className="bg-gray-900 text-white dark:bg-white dark:text-gray-900 px-5 py-2 rounded-full text-sm font-medium hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
                                 >
-                                    <UserIcon className="w-5 h-5 mr-3" />
                                     Sign In
                                 </button>
                             )}
                         </div>
+
+                        {/* Mobile Menu Button */}
+                        <div className="flex items-center md:hidden">
+                            <button
+                                onClick={toggleMenu}
+                                className="inline-flex items-center justify-center p-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
+                            >
+                                <span className="sr-only">Open main menu</span>
+                                {isMenuOpen ? (
+                                    <X className="block h-6 w-6" aria-hidden="true" />
+                                ) : (
+                                    <Menu className="block h-6 w-6" aria-hidden="true" />
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
-            )}
-        </nav>
+
+                {/* Mobile Menu Overlay */}
+                {isMenuOpen && (
+                    <div className="md:hidden absolute top-16 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-gray-200 dark:border-slate-800 shadow-xl animate-in slide-in-from-top-5 duration-200 h-[calc(100vh-4rem)] overflow-y-auto">
+                        <div className="px-4 pt-4 pb-6 space-y-2">
+                            {navLinks.map((link) => {
+                                const isActive = pathname === link.href;
+                                return (
+                                    <Link
+                                        key={link.href}
+                                        href={link.href}
+                                        onClick={() => setIsMenuOpen(false)}
+                                        className={`block px-4 py-3 rounded-xl text-base font-medium transition-all ${isActive
+                                                ? 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'
+                                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-slate-800 dark:hover:text-white'
+                                            }`}
+                                    >
+                                        {link.label}
+                                    </Link>
+                                );
+                            })}
+                        </div>
+
+                        <div className="px-4 py-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/50">
+                            <div className="flex items-center px-2 mb-6">
+                                {session ? (
+                                    <div className="flex-shrink-0 relative">
+                                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white dark:border-slate-700 shadow-sm">
+                                            <Image
+                                                src={
+                                                    session.user.user_metadata.avatar_url ||
+                                                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                                        session.user.email?.split('@')[0] || 'User'
+                                                    )}&background=random&color=fff`
+                                                }
+                                                alt="User"
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center shadow-sm border border-gray-100 dark:border-slate-600">
+                                        <UserIcon className="w-6 h-6 text-gray-400" />
+                                    </div>
+                                )}
+                                <div className="ml-4">
+                                    <div className="text-base font-bold text-gray-900 dark:text-white">
+                                        {session ? session.user.email?.split('@')[0] : 'Guest'}
+                                    </div>
+                                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                                        {session ? session.user.email : 'Welcome to Pomofomo'}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    onClick={toggleDarkMode}
+                                    className="flex flex-col items-center justify-center p-4 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all"
+                                >
+                                    {isDarkMode ? <Sun className="w-6 h-6 mb-2 text-amber-500" /> : <Moon className="w-6 h-6 mb-2 text-indigo-500" />}
+                                    <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                                        {isDarkMode ? 'Light' : 'Dark'}
+                                    </span>
+                                </button>
+
+                                {onOpenSettings && (
+                                    <button
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            onOpenSettings();
+                                        }}
+                                        className="flex flex-col items-center justify-center p-4 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all"
+                                    >
+                                        <Settings className="w-6 h-6 mb-2 text-gray-500 dark:text-gray-400" />
+                                        <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Settings</span>
+                                    </button>
+                                )}
+
+                                {onOpenReport && (
+                                    <button
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            onOpenReport();
+                                        }}
+                                        className="flex flex-col items-center justify-center p-4 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all"
+                                    >
+                                        <Flag className="w-6 h-6 mb-2 text-gray-500 dark:text-gray-400" />
+                                        <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Report</span>
+                                    </button>
+                                )}
+
+                                {session ? (
+                                    <button
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            onLogout?.();
+                                        }}
+                                        className="flex flex-col items-center justify-center p-4 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800/50 shadow-sm hover:shadow-md transition-all"
+                                    >
+                                        <LogOut className="w-6 h-6 mb-2 text-rose-500" />
+                                        <span className="text-xs font-medium text-rose-600 dark:text-rose-400">Sign Out</span>
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            onOpenLogin?.();
+                                        }}
+                                        className="flex flex-col items-center justify-center p-4 rounded-xl bg-gray-900 dark:bg-white shadow-sm hover:shadow-md transition-all"
+                                    >
+                                        <UserIcon className="w-6 h-6 mb-2 text-white dark:text-gray-900" />
+                                        <span className="text-xs font-medium text-white dark:text-gray-900">Sign In</span>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </nav>
+            {/* Spacer to prevent content from hiding behind fixed navbar */}
+            <div className="h-16" />
+        </>
     );
 }

@@ -77,7 +77,7 @@ export default function Home() {
 
   return (
     <div className={isDarkMode ? 'dark' : ''}>
-      <main className="flex min-h-screen flex-col items-center bg-[#f8f9fa] dark:bg-[#0f172a] transition-colors duration-300 p-3 sm:p-4 overflow-y-auto font-sans text-gray-900 dark:text-gray-100">
+      <main className="flex min-h-screen flex-col items-center bg-[#f8f9fa] dark:bg-[#0f172a] transition-colors duration-300 font-sans text-gray-900 dark:text-gray-100">
         <Toaster position="top-center" reverseOrder={false} />
 
         <LoginModal
@@ -106,7 +106,7 @@ export default function Home() {
         />
 
         {/* Content Container - Narrow for Focus */}
-        <div className="w-full max-w-lg flex flex-col items-center gap-8 animate-fade-in">
+        <div className="w-full max-w-lg flex flex-col items-center gap-8 animate-fade-in p-3 sm:p-4 mt-4">
           {/* ✨ TimerApp에 콜백 전달: 저장 완료 시 트리거 숫자를 증가시킴 */}
           <TimerApp
             settingsUpdated={settingsUpdateTrigger}
