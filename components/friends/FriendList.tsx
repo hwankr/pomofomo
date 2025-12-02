@@ -161,28 +161,28 @@ export default function FriendList({ session, refreshTrigger }: FriendListProps)
     switch (status) {
       case 'studying':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
             Studying{task ? `: ${task}` : ''}
           </span>
         );
       case 'paused':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
             Paused
           </span>
         );
       case 'online':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             Online
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
             Offline
           </span>
@@ -206,7 +206,7 @@ export default function FriendList({ session, refreshTrigger }: FriendListProps)
               {(friend.nickname || friend.friend_email || '?')[0].toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 {editingId === friend.id ? (
                   <div className="flex items-center gap-2 w-full max-w-[200px]">
                     <input
@@ -253,7 +253,7 @@ export default function FriendList({ session, refreshTrigger }: FriendListProps)
                     </button>
                   </div>
                 )}
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-3 shrink-0 self-start sm:self-auto mt-1 sm:mt-0">
                   {getStatusBadge(friend.friend?.status, friend.friend?.current_task)}
                   <button
                     onClick={() => confirmDelete(friend)}

@@ -80,8 +80,10 @@ export default function FriendRequestList({ session, refreshTrigger, onUpdate }:
     <ul className="space-y-3">
       {requests.map((req) => (
         <li key={req.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl hover:border-indigo-100 dark:hover:border-indigo-900 transition-colors">
-          <div className="mb-3 sm:mb-0">
-            <p className="font-medium text-gray-900 dark:text-white">{req.sender_email}</p>
+          <div className="mb-3 sm:mb-0 min-w-0 flex-1 mr-4">
+            <p className="font-medium text-gray-900 dark:text-white truncate" title={req.sender_email}>
+              {req.sender_email}
+            </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               {new Date(req.created_at).toLocaleDateString()}
             </p>
