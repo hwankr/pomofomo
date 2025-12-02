@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
 import { Users, UserPlus, UserMinus, X, Edit2, Check, ChevronDown, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
+import MemberReportModal from './MemberReportModal';
 
 type Profile = {
     id: string;
@@ -251,6 +252,8 @@ export default function FriendsSection({ user }: { user: User }) {
         );
     };
 
+    const [selectedFriendForReport, setSelectedFriendForReport] = useState<{ id: string; name: string } | null>(null);
+
     return (
         <div className="mt-8 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
             <div className="flex items-center justify-between mb-6">
@@ -318,9 +321,15 @@ export default function FriendsSection({ user }: { user: User }) {
                             {expandedGroups.includes(group) && (
                                 <div className="space-y-2 pl-2">
                                     {groupFriends.map((friend) => (
-                                        <div key={friend.id} className="group flex items-center justify-between p-3 bg-white dark:bg-gray-700/30 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-rose-200 dark:hover:border-rose-800 transition-colors">
+                                        <div
+                                            key={friend.id}
+                                            className="group flex items-center justify-between p-3 bg-white dark:bg-gray-700/30 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-rose-200 dark:hover:border-rose-800 transition-colors cursor-pointer"
+                                            onClick={() => {
+                                                setSelectedFriendForReport({ id: friend.id, name: friend.nickname || friend.username });
+                                            }}
+                                        >
                                             {editingFriend === friend.id ? (
-                                                <div className="flex-1 flex gap-2 items-center">
+                                                <div className="flex-1 flex gap-2 items-center" onClick={e => e.stopPropagation()}>
                                                     <input
                                                         value={editForm.nickname}
                                                         onChange={e => setEditForm({ ...editForm, nickname: e.target.value })}
@@ -354,7 +363,13 @@ export default function FriendsSection({ user }: { user: User }) {
                                                                     {friend.nickname || friend.username}
                                                                     {friend.nickname && <span className="text-xs text-gray-400 ml-1">({friend.username})</span>}
                                                                 </div>
-                                                                <button onClick={() => startEditing(friend)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-opacity">
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        startEditing(friend);
+                                                                    }}
+                                                                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-opacity"
+                                                                >
                                                                     <Edit2 size={12} />
                                                                 </button>
                                                             </div>
@@ -378,7 +393,10 @@ export default function FriendsSection({ user }: { user: User }) {
                                                         </div>
                                                     </div>
                                                     <button
-                                                        onClick={() => handleRemoveFriend(friend.id, friend.username)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleRemoveFriend(friend.id, friend.username);
+                                                        }}
                                                         className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors opacity-0 group-hover:opacity-100"
                                                         title="Remove friend"
                                                     >
@@ -394,6 +412,15 @@ export default function FriendsSection({ user }: { user: User }) {
                     ))
                 )}
             </div>
-        </div>
+
+            {selectedFriendForReport && (
+                <MemberReportModal
+                    isOpen={!!selectedFriendForReport}
+                    onClose={() => setSelectedFriendForReport(null)}
+                    userId={selectedFriendForReport.id}
+                    userName={selectedFriendForReport.name}
+                />
+            )}
+        </div >
     );
 }

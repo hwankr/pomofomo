@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { toast, Toaster } from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
+import MemberReportModal from '@/components/MemberReportModal';
 
 interface Member {
     id: string; // group_member id
@@ -37,6 +38,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     const [isLoading, setIsLoading] = useState(true);
     const [editingNickname, setEditingNickname] = useState(false);
     const [tempNickname, setTempNickname] = useState('');
+    const [selectedMemberForReport, setSelectedMemberForReport] = useState<{ id: string; name: string } | null>(null);
 
     const fetchGroupData = async () => {
         try {
@@ -310,7 +312,8 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                         return (
                             <div
                                 key={member.id}
-                                className={`bg-white dark:bg-slate-800 rounded-xl p-4 flex items-center justify-between shadow-sm border transition-all ${isStudying
+                                onClick={() => setSelectedMemberForReport({ id: member.user_id, name: displayName })}
+                                className={`bg-white dark:bg-slate-800 rounded-xl p-4 flex items-center justify-between shadow-sm border transition-all cursor-pointer hover:border-rose-200 dark:hover:border-rose-800 ${isStudying
                                     ? 'border-rose-200 dark:border-rose-900 ring-1 ring-rose-100 dark:ring-rose-900/30'
                                     : 'border-gray-100 dark:border-slate-700'
                                     }`}
@@ -323,7 +326,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                                     <div>
                                         <div className="flex items-center gap-2">
                                             {isCurrentUser && editingNickname ? (
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                                     <input
                                                         type="text"
                                                         value={tempNickname}
@@ -348,7 +351,8 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                                                     {displayName}
                                                     {isCurrentUser && (
                                                         <button
-                                                            onClick={() => {
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
                                                                 setTempNickname(member.nickname || '');
                                                                 setEditingNickname(true);
                                                             }}
@@ -392,7 +396,10 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
 
                                     {isLeader && !isCurrentUser && (
                                         <button
-                                            onClick={() => handleKickMember(member.id, displayName)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleKickMember(member.id, displayName);
+                                            }}
                                             className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                             title="Remove member"
                                         >
@@ -407,6 +414,15 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                     })}
                 </div>
             </div>
+
+            {selectedMemberForReport && (
+                <MemberReportModal
+                    isOpen={!!selectedMemberForReport}
+                    onClose={() => setSelectedMemberForReport(null)}
+                    userId={selectedMemberForReport.id}
+                    userName={selectedMemberForReport.name}
+                />
+            )}
         </div>
     );
 }
