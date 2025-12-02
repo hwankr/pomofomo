@@ -50,21 +50,29 @@ export default function GroupsPage() {
         <div className="min-h-screen bg-gray-50 dark:bg-slate-900 p-4 sm:p-8">
             <Toaster position="top-center" />
             <div className="max-w-4xl mx-auto">
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Groups</h1>
-                    <div className="flex gap-4">
-                        <button
-                            onClick={() => setIsJoinModalOpen(true)}
-                            className="px-4 py-2 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 rounded-lg shadow hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors font-medium border border-gray-200 dark:border-slate-700"
-                        >
-                            Join Group
-                        </button>
-                        <button
-                            onClick={() => setIsCreateModalOpen(true)}
-                            className="px-4 py-2 bg-rose-500 text-white rounded-lg shadow hover:bg-rose-600 transition-colors font-medium"
-                        >
-                            Create Group
-                        </button>
+                <div className="mb-8">
+                    <Link
+                        href="/"
+                        className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white mb-4 flex items-center gap-1"
+                    >
+                        ← Back to Home
+                    </Link>
+                    <div className="flex justify-between items-center">
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Groups</h1>
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => setIsJoinModalOpen(true)}
+                                className="px-4 py-2 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 rounded-lg shadow hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors font-medium border border-gray-200 dark:border-slate-700"
+                            >
+                                Join Group
+                            </button>
+                            <button
+                                onClick={() => setIsCreateModalOpen(true)}
+                                className="px-4 py-2 bg-rose-500 text-white rounded-lg shadow hover:bg-rose-600 transition-colors font-medium"
+                            >
+                                Create Group
+                            </button>
+                        </div>
                     </div>
                 </div>
 
