@@ -4,6 +4,7 @@ import './globals.css';
 import Footer from '../components/Footer';
 import { Toaster } from 'react-hot-toast';
 import FriendNotificationListener from '@/components/FriendNotificationListener';
+import IOSInstallPrompt from '@/components/IOSInstallPrompt';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -44,6 +45,7 @@ export default function RootLayout({
         <Toaster position="top-center" />
         <FriendNotificationListener />
         <main className="flex-grow">{children}</main>
+        <IOSInstallPrompt />
         <Footer />
       </body>
     </html>
