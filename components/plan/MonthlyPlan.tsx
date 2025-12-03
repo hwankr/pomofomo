@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { CheckCircle2, Circle, Plus, Trash2, Calendar as CalendarIcon, ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePersistedState } from '@/hooks/usePersistedState';
 
 interface MonthlyPlan {
   id: string;
@@ -23,7 +24,7 @@ export default function MonthlyPlan({ userId }: MonthlyPlanProps) {
   const [loading, setLoading] = useState(true);
   const [newPlanTitle, setNewPlanTitle] = useState('');
   const [isAdding, setIsAdding] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = usePersistedState('monthly_plan_expanded', true);
 
   // Calculate current month and year
   const today = new Date();

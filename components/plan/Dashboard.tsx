@@ -13,6 +13,7 @@ import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { ArrowLeft, ChevronUp, ChevronDown } from 'lucide-react';
 import TimerStatus from '../TimerStatus';
+import { usePersistedState } from '@/hooks/usePersistedState';
 
 interface DashboardProps {
   session: Session | null;
@@ -21,7 +22,7 @@ interface DashboardProps {
 export default function Dashboard({ session }: DashboardProps) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [focusTime, setFocusTime] = useState(0);
-  const [isDailyTasksExpanded, setIsDailyTasksExpanded] = useState(true);
+  const [isDailyTasksExpanded, setIsDailyTasksExpanded] = usePersistedState('dashboard_daily_expanded', true);
 
   useEffect(() => {
     if (!session) return;

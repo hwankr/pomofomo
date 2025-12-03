@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { format, subSeconds, getHours, getMinutes } from 'date-fns';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePersistedState } from '@/hooks/usePersistedState';
 
 interface TimelineProps {
   selectedDate: Date;
@@ -33,7 +34,7 @@ const formatDuration = (seconds: number) => {
 export default function Timeline({ selectedDate, userId }: TimelineProps) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = usePersistedState('timeline_expanded', true);
 
   const fetchSessions = async () => {
     if (!userId) return;
