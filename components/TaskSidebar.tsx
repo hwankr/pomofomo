@@ -56,7 +56,7 @@ export default function TaskSidebar({
         <div className="p-6 h-full flex flex-col">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-              Tasks
+              작업 목록
             </h2>
             <button
               onClick={onClose}
@@ -98,7 +98,7 @@ export default function TaskSidebar({
             {tasks.length > 0 && (
               <div className="space-y-2">
                 <h3 className="px-1 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Today's Tasks
+                  오늘의 작업
                 </h3>
                 {tasks.map((task) => (
                   <button
@@ -122,7 +122,7 @@ export default function TaskSidebar({
             {weeklyPlans && weeklyPlans.length > 0 && (
               <div className="space-y-2">
                 <h3 className="px-1 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Weekly Goals
+                  주간 목표
                 </h3>
                 {weeklyPlans.map((plan) => (
                   <button
@@ -146,7 +146,7 @@ export default function TaskSidebar({
             {monthlyPlans && monthlyPlans.length > 0 && (
               <div className="space-y-2">
                 <h3 className="px-1 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Monthly Goals
+                  월간 목표
                 </h3>
                 {monthlyPlans.map((plan) => (
                   <button

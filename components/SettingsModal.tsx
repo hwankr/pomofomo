@@ -275,7 +275,7 @@ export default function SettingsModal({
         >
           <div className="flex justify-between items-center p-5 border-b border-gray-100">
             <h2 className="text-gray-500 font-bold tracking-widest text-sm flex items-center gap-2">
-              ⚙️ SETTINGS
+              ⚙️ 설정
             </h2>
             <button
               onClick={handleSave}
@@ -503,7 +503,7 @@ export default function SettingsModal({
                   }`}
               >
                 <div className="flex justify-between mb-1">
-                  <span className="text-gray-500 text-xs">Volume</span>
+                  <span className="text-gray-500 text-xs">볼륨</span>
                   <span className="text-gray-400 text-xs font-mono">
                     {volume}%
                   </span>

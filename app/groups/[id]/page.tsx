@@ -84,7 +84,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
 
         } catch (error) {
             console.error('Error fetching group data:', error);
-            toast.error('Failed to load group data');
+            toast.error('그룹 데이터를 불러오는데 실패했습니다');
             router.push('/groups');
         } finally {
             setIsLoading(false);
@@ -143,7 +143,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                     filter: `id=eq.${id}`,
                 },
                 () => {
-                    toast.error('Group has been deleted');
+                    toast.error('그룹이 삭제되었습니다');
                     router.push('/groups');
                 }
             )
@@ -157,7 +157,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     const copyCode = () => {
         if (group?.code) {
             navigator.clipboard.writeText(group.code);
-            toast.success('Code copied to clipboard!');
+            toast.success('코드가 클립보드에 복사되었습니다!');
         }
     };
 
@@ -172,17 +172,17 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
 
             if (error) throw error;
 
-            toast.success('Nickname updated');
+            toast.success('닉네임이 업데이트되었습니다');
             setEditingNickname(false);
             fetchGroupData();
         } catch (error) {
             console.error('Error updating nickname:', error);
-            toast.error('Failed to update nickname');
+            toast.error('닉네임 업데이트에 실패했습니다');
         }
     };
 
     const handleKickMember = async (memberId: string, memberName: string) => {
-        if (!confirm(`Are you sure you want to remove ${memberName}?`)) return;
+        if (!confirm(`${memberName}님을 정말로 추방하시겠습니까?`)) return;
         try {
             const { error } = await supabase
                 .from('group_members')
@@ -190,15 +190,15 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                 .eq('id', memberId);
 
             if (error) throw error;
-            toast.success('Member removed');
+            toast.success('멤버가 추방되었습니다');
         } catch (error) {
             console.error('Error removing member:', error);
-            toast.error('Failed to remove member');
+            toast.error('멤버 추방에 실패했습니다');
         }
     };
 
     const handleLeaveGroup = async () => {
-        if (!confirm('Are you sure you want to leave this group?')) return;
+        if (!confirm('정말로 이 그룹을 떠나시겠습니까?')) return;
         try {
             const { error } = await supabase
                 .from('group_members')
@@ -207,16 +207,16 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                 .eq('user_id', currentUser.id);
 
             if (error) throw error;
-            toast.success('Left group');
+            toast.success('그룹을 떠났습니다');
             router.push('/groups');
         } catch (error) {
             console.error('Error leaving group:', error);
-            toast.error('Failed to leave group');
+            toast.error('그룹 떠나기에 실패했습니다');
         }
     };
 
     const handleDeleteGroup = async () => {
-        if (!confirm('Are you sure you want to delete this group? This action cannot be undone.')) return;
+        if (!confirm('정말로 이 그룹을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
         try {
             const { error } = await supabase
                 .from('groups')
@@ -224,11 +224,11 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                 .eq('id', id);
 
             if (error) throw error;
-            toast.success('Group deleted');
+            toast.success('그룹이 삭제되었습니다');
             router.push('/groups');
         } catch (error) {
             console.error('Error deleting group:', error);
-            toast.error('Failed to delete group');
+            toast.error('그룹 삭제에 실패했습니다');
         }
     };
 
@@ -253,7 +253,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                         onClick={() => router.push('/groups')}
                         className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white mb-4 flex items-center gap-1"
                     >
-                        ← Back to Groups
+                        ← 그룹 목록으로 돌아가기
                     </button>
 
                     <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-slate-700">
@@ -261,19 +261,19 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                             <div>
                                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{group.name}</h1>
                                 <p className="text-gray-500 dark:text-gray-400">
-                                    {members.length} member{members.length !== 1 ? 's' : ''}
+                                    {members.length}명의 멤버
                                 </p>
                             </div>
 
                             <div className="flex flex-wrap items-center gap-3">
                                 {isLeader && (
                                     <div className="flex items-center gap-3 bg-gray-100 dark:bg-slate-700 px-4 py-2 rounded-xl">
-                                        <span className="text-sm font-medium text-gray-500 dark:text-gray-300">Code:</span>
+                                        <span className="text-sm font-medium text-gray-500 dark:text-gray-300">코드:</span>
                                         <code className="text-lg font-bold text-rose-500 font-mono tracking-wider">{group.code}</code>
                                         <button
                                             onClick={copyCode}
                                             className="p-1.5 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-gray-500 dark:text-gray-400"
-                                            title="Copy Code"
+                                            title="코드 복사"
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
@@ -287,14 +287,14 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                                         onClick={handleDeleteGroup}
                                         className="px-4 py-2 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors font-medium text-sm"
                                     >
-                                        Delete Group
+                                        그룹 삭제
                                     </button>
                                 ) : (
                                     <button
                                         onClick={handleLeaveGroup}
                                         className="px-4 py-2 bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors font-medium text-sm"
                                     >
-                                        Leave Group
+                                        그룹 나가기
                                     </button>
                                 )}
                             </div>
@@ -307,7 +307,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                         const isOnline = member.profiles.status === 'online' || member.profiles.status === 'studying';
                         const isStudying = member.profiles.status === 'studying';
                         const isCurrentUser = member.user_id === currentUser.id;
-                        const displayName = member.nickname || (member.profiles.email ? member.profiles.email.split('@')[0] : 'Member');
+                        const displayName = member.nickname || (member.profiles.email ? member.profiles.email.split('@')[0] : '멤버');
 
                         return (
                             <div
@@ -332,7 +332,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                                                         value={tempNickname}
                                                         onChange={(e) => setTempNickname(e.target.value)}
                                                         className="px-2 py-1 text-sm border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
-                                                        placeholder="Nickname"
+                                                        placeholder="닉네임"
                                                         autoFocus
                                                     />
                                                     <button onClick={handleUpdateNickname} className="text-green-500 hover:text-green-600">
@@ -369,18 +369,18 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
 
                                             {member.user_id === group.leader_id && (
                                                 <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 text-xs rounded-full font-medium">
-                                                    Leader
+                                                    리더
                                                 </span>
                                             )}
                                         </div>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
                                             {isStudying ? (
                                                 <span className="text-rose-500 font-medium">
-                                                    🔥 Studying {member.profiles.current_task ? `: ${member.profiles.current_task}` : ''}
+                                                    🔥 공부 중 {member.profiles.current_task ? `: ${member.profiles.current_task}` : ''}
                                                 </span>
                                             ) : (
                                                 <span>
-                                                    {member.profiles.status === 'online' ? 'Online' : 'Offline'} • Last active {formatDistanceToNow(new Date(member.profiles.last_active_at), { addSuffix: true })}
+                                                    {member.profiles.status === 'online' ? '온라인' : '오프라인'} • 마지막 활동 {formatDistanceToNow(new Date(member.profiles.last_active_at), { addSuffix: true })}
                                                 </span>
                                             )}
                                         </p>
@@ -390,7 +390,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                                 <div className="flex items-center gap-3">
                                     {isStudying && (
                                         <div className="inline-flex items-center px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm font-medium">
-                                            Focusing
+                                            집중 중
                                         </div>
                                     )}
 
@@ -401,7 +401,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                                                 handleKickMember(member.id, displayName);
                                             }}
                                             className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                            title="Remove member"
+                                            title="멤버 추방"
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />

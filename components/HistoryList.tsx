@@ -244,7 +244,7 @@ export default function HistoryList({ updateTrigger = 0 }: HistoryListProps) {
     <div className="w-full max-w-md mt-4">
       <div className="flex justify-between items-center mb-3 px-2">
         <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-          Recent Activity
+          최근 활동
         </h3>
         <button
           onClick={fetchHistory}

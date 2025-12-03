@@ -188,28 +188,28 @@ export default function FriendList({ session, refreshTrigger }: FriendListProps)
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-            Studying{task ? `: ${task}` : ''}
+            공부 중{task ? `: ${task}` : ''}
           </span>
         );
       case 'paused':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-            Paused
+            일시정지
           </span>
         );
       case 'online':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Online
+            온라인
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-            Offline
+            오프라인
           </span>
         );
     }
@@ -280,7 +280,7 @@ export default function FriendList({ session, refreshTrigger }: FriendListProps)
                           handleStartEdit(friend);
                         }}
                         className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
-                        title="Edit nickname"
+                        title="닉네임 수정"
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
@@ -304,14 +304,14 @@ export default function FriendList({ session, refreshTrigger }: FriendListProps)
                         confirmDelete(friend);
                       }}
                       className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:text-rose-400 dark:hover:bg-rose-900/30 rounded-lg transition-all"
-                      title="Remove friend"
+                      title="친구 삭제"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  Added {new Date(friend.created_at).toLocaleDateString()}
+                  친구 추가일: {new Date(friend.created_at).toLocaleDateString()}
                 </p>
               </div>
             </div>

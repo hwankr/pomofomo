@@ -77,12 +77,12 @@ export default function FriendsDashboard({ session }: FriendsDashboardProps) {
               <div className="contents lg:flex lg:flex-col lg:col-span-4 lg:space-y-6">
                 <div className="order-1 space-y-6">
                   <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-                    <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Add Friend</h2>
+                    <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">친구 추가</h2>
                     <AddFriend session={session} onFriendAdded={refreshData} />
                   </section>
 
                   <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-                    <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Friend Requests</h2>
+                    <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">받은 요청</h2>
                     <FriendRequestList session={session} refreshTrigger={refreshTrigger} onUpdate={refreshData} />
                   </section>
                 </div>
@@ -92,7 +92,7 @@ export default function FriendsDashboard({ session }: FriendsDashboardProps) {
               <div className="contents lg:flex lg:flex-col lg:col-span-8 lg:space-y-6">
                 <div className="order-2 h-full">
                   <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 h-full">
-                    <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">My Friends</h2>
+                    <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">친구 목록</h2>
                     <FriendList session={session} refreshTrigger={refreshTrigger} />
                   </section>
                 </div>

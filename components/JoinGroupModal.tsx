@@ -24,7 +24,7 @@ export default function JoinGroupModal({ isOpen, onClose, onJoined }: JoinGroupM
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
-                toast.error('Login required');
+                toast.error('로그인이 필요합니다');
                 return;
             }
 
@@ -36,7 +36,7 @@ export default function JoinGroupModal({ isOpen, onClose, onJoined }: JoinGroupM
                 .single();
 
             if (findError || !group) {
-                toast.error('Group not found. Please check the code.');
+                toast.error('그룹을 찾을 수 없습니다. 코드를 확인해주세요.');
                 return;
             }
 
@@ -50,19 +50,19 @@ export default function JoinGroupModal({ isOpen, onClose, onJoined }: JoinGroupM
 
             if (joinError) {
                 if (joinError.code === '23505') { // Unique violation
-                    toast.error('You are already a member of this group.');
+                    toast.error('이미 이 그룹의 멤버입니다.');
                 } else {
                     throw joinError;
                 }
             } else {
-                toast.success(`Joined ${group.name} successfully!`);
+                toast.success(`${group.name} 그룹에 참여했습니다!`);
                 setCode('');
                 onJoined();
                 onClose();
             }
         } catch (error) {
             console.error('Error joining group:', error);
-            toast.error('Failed to join group');
+            toast.error('그룹 참여에 실패했습니다');
         } finally {
             setIsSubmitting(false);
         }
@@ -72,22 +72,22 @@ export default function JoinGroupModal({ isOpen, onClose, onJoined }: JoinGroupM
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
                 <div className="p-6">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Join Group</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">그룹 참여하기</h2>
                     <form onSubmit={handleSubmit}>
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Group Code
+                                그룹 코드
                             </label>
                             <input
                                 type="text"
                                 value={code}
                                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                                placeholder="ENTER CODE"
+                                placeholder="코드 입력"
                                 className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all uppercase tracking-widest font-mono"
                                 autoFocus
                             />
                             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                Ask the group leader for the 6-character code.
+                                그룹 리더에게 6자리 코드를 요청하세요.
                             </p>
                         </div>
                         <div className="flex justify-end gap-3">
@@ -96,14 +96,14 @@ export default function JoinGroupModal({ isOpen, onClose, onJoined }: JoinGroupM
                                 onClick={onClose}
                                 className="px-5 py-2.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-medium transition-colors"
                             >
-                                Cancel
+                                취소
                             </button>
                             <button
                                 type="submit"
                                 disabled={!code.trim() || isSubmitting}
                                 className="px-5 py-2.5 bg-rose-500 text-white rounded-xl font-bold shadow-lg hover:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95"
                             >
-                                {isSubmitting ? 'Joining...' : 'Join Group'}
+                                {isSubmitting ? '참여 중...' : '그룹 참여'}
                             </button>
                         </div>
                     </form>

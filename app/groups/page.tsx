@@ -55,22 +55,22 @@ export default function GroupsPage() {
                         href="/"
                         className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white mb-4 flex items-center gap-1"
                     >
-                        ← Back to Home
+                        ← 홈으로 돌아가기
                     </Link>
                     <div className="flex justify-between items-center">
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Groups</h1>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">내 그룹</h1>
                         <div className="flex gap-4">
                             <button
                                 onClick={() => setIsJoinModalOpen(true)}
                                 className="px-4 py-2 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 rounded-lg shadow hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors font-medium border border-gray-200 dark:border-slate-700"
                             >
-                                Join Group
+                                그룹 참여
                             </button>
                             <button
                                 onClick={() => setIsCreateModalOpen(true)}
                                 className="px-4 py-2 bg-rose-500 text-white rounded-lg shadow hover:bg-rose-600 transition-colors font-medium"
                             >
-                                Create Group
+                                그룹 생성
                             </button>
                         </div>
                     </div>
@@ -83,13 +83,13 @@ export default function GroupsPage() {
                 ) : groups.length === 0 ? (
                     <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700">
                         <div className="text-6xl mb-4">👥</div>
-                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No groups yet</h3>
-                        <p className="text-gray-500 dark:text-gray-400 mb-8">Create a group to study with friends or join an existing one!</p>
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">아직 그룹이 없습니다</h3>
+                        <p className="text-gray-500 dark:text-gray-400 mb-8">친구들과 함께 공부할 그룹을 만들거나 기존 그룹에 참여해보세요!</p>
                         <button
                             onClick={() => setIsCreateModalOpen(true)}
                             className="px-6 py-3 bg-rose-500 text-white rounded-xl shadow-lg hover:bg-rose-600 transition-all transform hover:-translate-y-1"
                         >
-                            Get Started
+                            시작하기
                         </button>
                     </div>
                 ) : (
@@ -108,7 +108,7 @@ export default function GroupsPage() {
                                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 truncate pr-6">{group.name}</h3>
                                 <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                                     <span className="inline-block w-2 h-2 rounded-full bg-green-400 mr-2"></span>
-                                    Active
+                                    활동 중
                                 </div>
                             </Link>
                         ))}

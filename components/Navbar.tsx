@@ -42,9 +42,9 @@ export default function Navbar({
     }, []);
 
     const navLinks = [
-        { href: '/plan', label: 'Plan' },
-        { href: '/friends', label: 'Friends' },
-        { href: '/groups', label: 'Groups' },
+        { href: '/plan', label: '계획' },
+        { href: '/friends', label: '친구' },
+        { href: '/groups', label: '그룹' },
     ];
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -71,7 +71,7 @@ export default function Navbar({
                                     />
                                 </div>
                                 <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-rose-500 to-orange-500 hidden sm:block">
-                                    fomopomo
+                                    Fomopomo
                                 </span>
                             </Link>
 
@@ -183,7 +183,7 @@ export default function Navbar({
                                     onClick={onOpenLogin}
                                     className="bg-gray-900 text-white dark:bg-white dark:text-gray-900 px-5 py-2 rounded-full text-sm font-medium hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
                                 >
-                                    Sign In
+                                    로그인
                                 </button>
                             )}
                         </div>
@@ -252,10 +252,10 @@ export default function Navbar({
                                 )}
                                 <div className="ml-4">
                                     <div className="text-base font-bold text-gray-900 dark:text-white">
-                                        {session ? session.user.email?.split('@')[0] : 'Guest'}
+                                        {session ? session.user.email?.split('@')[0] : '게스트'}
                                     </div>
                                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                                        {session ? session.user.email : 'Welcome to fomopomo'}
+                                        {session ? session.user.email : 'fomopomo에 오신 것을 환영합니다'}
                                     </div>
                                 </div>
                             </div>
@@ -267,7 +267,7 @@ export default function Navbar({
                                 >
                                     {isDarkMode ? <Sun className="w-6 h-6 mb-2 text-amber-500" /> : <Moon className="w-6 h-6 mb-2 text-indigo-500" />}
                                     <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
-                                        {isDarkMode ? 'Light' : 'Dark'}
+                                        {isDarkMode ? '라이트' : '다크'}
                                     </span>
                                 </button>
 
@@ -280,7 +280,7 @@ export default function Navbar({
                                         className="flex flex-col items-center justify-center p-4 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all"
                                     >
                                         <Settings className="w-6 h-6 mb-2 text-gray-500 dark:text-gray-400" />
-                                        <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Settings</span>
+                                        <span className="text-xs font-medium text-gray-600 dark:text-gray-300">설정</span>
                                     </button>
                                 )}
 
@@ -293,7 +293,7 @@ export default function Navbar({
                                         className="flex flex-col items-center justify-center p-4 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all"
                                     >
                                         <Flag className="w-6 h-6 mb-2 text-gray-500 dark:text-gray-400" />
-                                        <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Report</span>
+                                        <span className="text-xs font-medium text-gray-600 dark:text-gray-300">리포트</span>
                                     </button>
                                 )}
 
@@ -306,7 +306,7 @@ export default function Navbar({
                                         className="flex flex-col items-center justify-center p-4 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800/50 shadow-sm hover:shadow-md transition-all"
                                     >
                                         <LogOut className="w-6 h-6 mb-2 text-rose-500" />
-                                        <span className="text-xs font-medium text-rose-600 dark:text-rose-400">Sign Out</span>
+                                        <span className="text-xs font-medium text-rose-600 dark:text-rose-400">로그아웃</span>
                                     </button>
                                 ) : (
                                     <button
@@ -317,7 +317,7 @@ export default function Navbar({
                                         className="flex flex-col items-center justify-center p-4 rounded-xl bg-gray-900 dark:bg-white shadow-sm hover:shadow-md transition-all"
                                     >
                                         <UserIcon className="w-6 h-6 mb-2 text-white dark:text-gray-900" />
-                                        <span className="text-xs font-medium text-white dark:text-gray-900">Sign In</span>
+                                        <span className="text-xs font-medium text-white dark:text-gray-900">로그인</span>
                                     </button>
                                 )}
                             </div>

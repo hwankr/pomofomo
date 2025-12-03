@@ -448,13 +448,13 @@ export default function TimerApp({
     const defaultTitle = 'fomopomo';
     const modeLabel =
       timerMode === 'focus'
-        ? 'Focus'
+        ? '집중'
         : timerMode === 'shortBreak'
-          ? 'Short Break'
-          : 'Long Break';
+          ? '짧은 휴식'
+          : '긴 휴식';
 
     const timerTitle = `${formatTime(timeLeft)} - ${modeLabel} | fomopomo`;
-    const stopwatchTitle = `${formatTime(stopwatchTime)} - Stopwatch | fomopomo`;
+    const stopwatchTitle = `${formatTime(stopwatchTime)} - 스톱워치 | fomopomo`;
 
     if (isRunning) {
       document.title = timerTitle;
