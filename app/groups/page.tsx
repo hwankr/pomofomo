@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuthSession } from '@/hooks/useAuthSession';
 import Link from 'next/link';
 import CreateGroupModal from '@/components/CreateGroupModal';
 import JoinGroupModal from '@/components/JoinGroupModal';
@@ -14,20 +15,20 @@ interface Group {
 }
 
 export default function GroupsPage() {
+    const { session, loading: sessionLoading } = useAuthSession();
     const [groups, setGroups] = useState<Group[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [groupsLoading, setGroupsLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
     const fetchGroups = async () => {
+        if (!session?.user) return;
+        
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
             const { data, error } = await supabase
                 .from('group_members')
                 .select('groups (id, name, leader_id)')
-                .eq('user_id', user.id);
+                .eq('user_id', session.user.id);
 
             if (error) throw error;
 
@@ -38,13 +39,17 @@ export default function GroupsPage() {
         } catch (error) {
             console.error('Error fetching groups:', error);
         } finally {
-            setIsLoading(false);
+            setGroupsLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchGroups();
-    }, []);
+        if (session?.user) {
+            fetchGroups();
+        } else if (!sessionLoading) {
+            setGroupsLoading(false);
+        }
+    }, [session, sessionLoading]);
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-slate-900 p-4 sm:p-8">
@@ -76,7 +81,7 @@ export default function GroupsPage() {
                     </div>
                 </div>
 
-                {isLoading ? (
+                {groupsLoading ? (
                     <div className="text-center py-12">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto"></div>
                     </div>

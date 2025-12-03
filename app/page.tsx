@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Session } from '@supabase/supabase-js';
+import { useAuthSession } from '@/hooks/useAuthSession';
 
 import TimerApp from '@/components/TimerApp';
 import HistoryList from '@/components/HistoryList';
@@ -15,8 +15,7 @@ import { isInAppBrowser, handleInAppBrowser } from '@/lib/userAgent';
 import Navbar from '@/components/Navbar';
 
 export default function Home() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { session, loading: isLoading } = useAuthSession();
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -30,25 +29,12 @@ export default function Home() {
   const [historyUpdateTrigger, setHistoryUpdateTrigger] = useState(0);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setIsLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
     if (
       window.matchMedia &&
       window.matchMedia('(prefers-color-scheme: dark)').matches
     ) {
       setTimeout(() => setIsDarkMode(true), 0);
     }
-
-    return () => subscription.unsubscribe();
   }, []);
 
   const handleGoogleLogin = async () => {
