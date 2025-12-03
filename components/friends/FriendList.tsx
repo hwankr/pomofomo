@@ -264,8 +264,8 @@ export default function FriendList({ session, refreshTrigger }: FriendListProps)
                       </button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-gray-900 dark:text-white truncate">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <p className={`font-medium text-gray-900 dark:text-white ${friend.nickname ? 'whitespace-nowrap shrink-0' : 'truncate'}`}>
                         {friend.nickname || friend.friend_email || '알 수 없는 사용자'}
                       </p>
 
