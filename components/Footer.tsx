@@ -10,7 +10,7 @@ export default function Footer() {
           {/* Brand Section */}
           <div className="text-center">
             <Link href="/" className="text-2xl font-bold text-rose-500">
-              Pomofomo
+              fomopomo
             </Link>
             <p className="mt-4 text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
               Focus on your work, not the fear of missing out. Boost your productivity with our simple timer.
@@ -30,7 +30,7 @@ export default function Footer() {
 
         <div className="mt-12 border-t border-gray-200 dark:border-slate-800 pt-8">
           <p className="text-base text-gray-500 dark:text-gray-400 text-center">
-            &copy; {currentYear} Pomofomo. All rights reserved.
+            &copy; {currentYear} fomopomo. All rights reserved.
           </p>
         </div>
       </div>

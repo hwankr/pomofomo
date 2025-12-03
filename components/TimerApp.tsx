@@ -286,12 +286,12 @@ export default function TimerApp({
       },
       lastUpdated: Date.now(),
     };
-    localStorage.setItem("pomofomo_full_state", JSON.stringify(state));
+    localStorage.setItem("fomopomo_full_state", JSON.stringify(state));
   }, []);
 
   // 1. Load Settings
   useEffect(() => {
-    const savedSettings = localStorage.getItem("pomofomo_settings");
+    const savedSettings = localStorage.getItem("fomopomo_settings");
     if (savedSettings) {
       const parsed = JSON.parse(savedSettings);
       setSettings((prev) => ({
@@ -310,7 +310,7 @@ export default function TimerApp({
   // 2. Restore State (Mount only)
   useEffect(() => {
     const restoreState = () => {
-      const savedStateJson = localStorage.getItem("pomofomo_full_state");
+      const savedStateJson = localStorage.getItem("fomopomo_full_state");
       if (savedStateJson) {
         try {
           const state: SavedState = JSON.parse(savedStateJson);
@@ -373,7 +373,7 @@ export default function TimerApp({
   }, [isRunning]);
 
   useEffect(() => {
-    const defaultTitle = 'Pomofomo';
+    const defaultTitle = 'fomopomo';
     const modeLabel =
       timerMode === 'focus'
         ? 'Focus'
@@ -381,8 +381,8 @@ export default function TimerApp({
           ? 'Short Break'
           : 'Long Break';
 
-    const timerTitle = `${formatTime(timeLeft)} - ${modeLabel} | Pomofomo`;
-    const stopwatchTitle = `${formatTime(stopwatchTime)} - Stopwatch | Pomofomo`;
+    const timerTitle = `${formatTime(timeLeft)} - ${modeLabel} | fomopomo`;
+    const stopwatchTitle = `${formatTime(stopwatchTime)} - Stopwatch | fomopomo`;
 
     if (isRunning) {
       document.title = timerTitle;
@@ -407,12 +407,12 @@ export default function TimerApp({
 
   useEffect(() => {
     return () => {
-      document.title = 'Pomofomo';
+      document.title = 'fomopomo';
     };
   }, []);
 
   const persistSettings = useCallback(async (newSettings: typeof settings) => {
-    localStorage.setItem('pomofomo_settings', JSON.stringify(newSettings));
+    localStorage.setItem('fomopomo_settings', JSON.stringify(newSettings));
     try {
       const {
         data: { user },

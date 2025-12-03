@@ -27,7 +27,7 @@ export default function TimerStatus() {
 
     useEffect(() => {
         const checkStatus = () => {
-            const savedState = localStorage.getItem('pomofomo_full_state');
+            const savedState = localStorage.getItem('fomopomo_full_state');
             if (!savedState) {
                 setStatus(null);
                 return;

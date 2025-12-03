@@ -1,12 +1,3 @@
-# Pomofomo 🍅
-
-![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38B2AC?style=for-the-badge&logo=tailwind-css)
-![Supabase](https://img.shields.io/badge/Supabase-Auth_%26_DB-3ECF8E?style=for-the-badge&logo=supabase)
-
-**Pomofomo**는 뽀모도로 테크닉을 기반으로, 당신의 공부와 업무 시간을 더 선명하게 기록하고 분석해주는 웹 타이머 서비스입니다.  
-단순한 타이머를 넘어, 태스크별 집중 시간을 추적하고 시각화된 리포트를 통해 생산성을 극대화할 수 있도록 돕습니다.
 
 👉 **라이브 서비스**: [https://pomofomo.vercel.app](https://pomofomo.vercel.app)
 

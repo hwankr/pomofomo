@@ -1,12 +1,13 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import Footer from '../components/Footer';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Pomofomo',
-  description: 'Focus on your work with Pomofomo',
+  title: 'fomopomo',
+  description: 'fomopomo - Focus on your work, not on missing out',
   manifest: '/manifest.webmanifest',
   icons: {
     icon: '/icon.png', // 기본 파비콘
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true, // 웹앱으로 동작 가능하게 설정
-    title: 'Pomofomo', // 홈 화면에 추가될 때의 이름
+    title: 'fomopomo', // 홈 화면에 추가될 때의 이름
     statusBarStyle: 'black-translucent', // 상단 상태바 스타일 (선택사항: default, black, black-translucent)
   },
 };
@@ -29,8 +30,6 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
 };
-
-import Footer from '../components/Footer';
 
 export default function RootLayout({
   children,

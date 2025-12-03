@@ -46,7 +46,7 @@ export default function HistoryList({ updateTrigger = 0 }: HistoryListProps) {
       }
 
       if (!tasks) {
-        const localSaved = localStorage.getItem('pomofomo_settings');
+        const localSaved = localStorage.getItem('fomopomo_settings');
         if (localSaved) {
           const parsed = JSON.parse(localSaved);
           if (parsed.tasks && parsed.tasks.length > 0) tasks = parsed.tasks;
@@ -219,18 +219,17 @@ export default function HistoryList({ updateTrigger = 0 }: HistoryListProps) {
               >
                 <div className="flex items-start gap-3 flex-1 min-w-0">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
-                      item.mode === 'pomo'
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${item.mode === 'pomo'
                         ? 'bg-rose-100 text-rose-500 dark:bg-rose-900/30'
                         : 'bg-indigo-100 text-indigo-500 dark:bg-indigo-900/30'
-                    }`}
+                      }`}
                   >
                     {item.mode === 'pomo' ? '🍅' : '⏱️'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
                       <div>
-                        <div className="font-bold text-gray-700 dark:text-gray-200 text-sm">  
+                        <div className="font-bold text-gray-700 dark:text-gray-200 text-sm">
                           {item.mode === 'pomo' ? '뽀모도로' : '스톱워치'}
                         </div>
                         <div className="text-xs text-gray-400">

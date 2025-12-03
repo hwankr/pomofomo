@@ -53,8 +53,8 @@ export default function Navbar({
         <>
             <nav
                 className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${scrolled
-                        ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-gray-200/50 dark:border-slate-700/50 shadow-sm'
-                        : 'bg-transparent border-transparent'
+                    ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-gray-200/50 dark:border-slate-700/50 shadow-sm'
+                    : 'bg-transparent border-transparent'
                     }`}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -65,13 +65,13 @@ export default function Navbar({
                                 <div className="relative w-8 h-8 overflow-hidden rounded-xl shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-105">
                                     <Image
                                         src={appIcon}
-                                        alt="Pomofomo"
+                                        alt="fomopomo"
                                         fill
                                         className="object-cover"
                                     />
                                 </div>
                                 <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-rose-500 to-orange-500 hidden sm:block">
-                                    Pomofomo
+                                    fomopomo
                                 </span>
                             </Link>
 
@@ -84,8 +84,8 @@ export default function Navbar({
                                             key={link.href}
                                             href={link.href}
                                             className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${isActive
-                                                    ? 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'
-                                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-slate-800/50'
+                                                ? 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'
+                                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-slate-800/50'
                                                 }`}
                                         >
                                             {link.label}
@@ -217,8 +217,8 @@ export default function Navbar({
                                         href={link.href}
                                         onClick={() => setIsMenuOpen(false)}
                                         className={`block px-4 py-3 rounded-xl text-base font-medium transition-all ${isActive
-                                                ? 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'
-                                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-slate-800 dark:hover:text-white'
+                                            ? 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'
+                                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-slate-800 dark:hover:text-white'
                                             }`}
                                     >
                                         {link.label}
@@ -255,7 +255,7 @@ export default function Navbar({
                                         {session ? session.user.email?.split('@')[0] : 'Guest'}
                                     </div>
                                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                                        {session ? session.user.email : 'Welcome to Pomofomo'}
+                                        {session ? session.user.email : 'Welcome to fomopomo'}
                                     </div>
                                 </div>
                             </div>

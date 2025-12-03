@@ -94,7 +94,7 @@ export default function LoginModal({
             {isSignUp ? 'Sign Up' : 'Sign In'}
           </h2>
           <h1 className="text-2xl font-extrabold text-gray-700">
-            {isSignUp ? 'Pomofomo 회원가입' : 'Pomofomo 로그인'}
+            {isSignUp ? 'fomopomo 회원가입' : 'fomopomo 로그인'}
           </h1>
         </div>
 
