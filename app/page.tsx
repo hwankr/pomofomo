@@ -9,7 +9,7 @@ import HistoryList from '@/components/HistoryList';
 import LoginModal from '@/components/LoginModal';
 import ReportModal from '@/components/ReportModal';
 import SettingsModal from '@/components/SettingsModal';
-import { Toaster, toast } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 
 import { isInAppBrowser, handleInAppBrowser } from '@/lib/userAgent';
 import Navbar from '@/components/Navbar';
@@ -78,7 +78,7 @@ export default function Home() {
   return (
     <div className={isDarkMode ? 'dark' : ''}>
       <main className="flex min-h-screen flex-col items-center bg-[#f8f9fa] dark:bg-[#0f172a] transition-colors duration-300 font-sans text-gray-900 dark:text-gray-100">
-        <Toaster position="top-center" reverseOrder={false} />
+
 
         <LoginModal
           isOpen={isLoginModalOpen}

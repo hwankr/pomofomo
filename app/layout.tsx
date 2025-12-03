@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Footer from '../components/Footer';
+import { Toaster } from 'react-hot-toast';
+import FriendNotificationListener from '@/components/FriendNotificationListener';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -39,6 +41,8 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <body className={`${inter.className} flex flex-col min-h-screen`}>
+        <Toaster position="top-center" />
+        <FriendNotificationListener />
         <main className="flex-grow">{children}</main>
         <Footer />
       </body>

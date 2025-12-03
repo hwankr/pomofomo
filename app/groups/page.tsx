@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import CreateGroupModal from '@/components/CreateGroupModal';
 import JoinGroupModal from '@/components/JoinGroupModal';
-import { Toaster } from 'react-hot-toast';
+
 
 interface Group {
     id: string;
@@ -48,7 +48,7 @@ export default function GroupsPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-slate-900 p-4 sm:p-8">
-            <Toaster position="top-center" />
+
             <div className="max-w-4xl mx-auto">
                 <div className="mb-8">
                     <Link

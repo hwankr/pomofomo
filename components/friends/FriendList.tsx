@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
-import { Pencil, Trash2, Check, X, AlertTriangle } from 'lucide-react';
+import { Pencil, Trash2, Check, X, AlertTriangle, Bell, BellOff } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import MemberReportModal from '../MemberReportModal';
 
@@ -25,6 +25,7 @@ interface Friendship {
   friend_id: string;
   nickname: string | null;
   created_at: string;
+  is_notification_enabled: boolean;
   friend: FriendProfile;
 }
 
@@ -85,6 +86,7 @@ export default function FriendList({ session, refreshTrigger }: FriendListProps)
           friend_id,
           nickname,
           created_at,
+          is_notification_enabled,
           friend:friend_id (
             status,
             current_task,
@@ -157,6 +159,27 @@ export default function FriendList({ session, refreshTrigger }: FriendListProps)
       toast.error('닉네임 수정에 실패했습니다.');
     }
 
+  };
+
+  const toggleNotification = async (friend: Friendship, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const newValue = !friend.is_notification_enabled;
+      const { error } = await supabase
+        .from('friendships')
+        .update({ is_notification_enabled: newValue })
+        .eq('id', friend.id);
+
+      if (error) throw error;
+
+      setFriends(prev => prev.map(f =>
+        f.id === friend.id ? { ...f, is_notification_enabled: newValue } : f
+      ));
+      toast.success(newValue ? '알림을 켰습니다.' : '알림을 껐습니다.');
+    } catch (error) {
+      console.error('Error toggling notification:', error);
+      toast.error('설정 변경 실패');
+    }
   };
 
   const getStatusBadge = (status: string | null, task: string | null) => {
@@ -264,13 +287,22 @@ export default function FriendList({ session, refreshTrigger }: FriendListProps)
                     </div>
                   )}
                   <div className="flex items-center gap-3 shrink-0 self-start sm:self-auto mt-1 sm:mt-0">
+                    <button
+                      onClick={(e) => toggleNotification(friend, e)}
+                      className={`p-1.5 rounded-lg transition-all ${friend.is_notification_enabled
+                        ? 'text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'
+                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-700'
+                        }`}
+                      title={friend.is_notification_enabled ? '알림 끄기' : '알림 켜기'}
+                    >
+                      {friend.is_notification_enabled ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
+                    </button>
                     {getStatusBadge(friend.friend?.status, friend.friend?.current_task)}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         confirmDelete(friend);
                       }}
-
                       className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:text-rose-400 dark:hover:bg-rose-900/30 rounded-lg transition-all"
                       title="Remove friend"
                     >
@@ -317,7 +349,7 @@ export default function FriendList({ session, refreshTrigger }: FriendListProps)
             </div>
           </div>
         )}
-      </ul>
+      </ul >
       {
         selectedFriendForReport && (
           <MemberReportModal
