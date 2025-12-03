@@ -340,7 +340,10 @@ export default function TimerApp({
             // [타이머 복구]
             setTimerMode(state.timer.mode);
             setCycleCount(state.timer.cycleCount);
-            setFocusLoggedSeconds(state.timer.loggedSeconds || 0);
+
+            // Validate loggedSeconds
+            const restoredLogged = state.timer.loggedSeconds || 0;
+            setFocusLoggedSeconds(restoredLogged > 24 * 60 * 60 ? 0 : restoredLogged);
 
             if (state.timer.isRunning && state.timer.targetTime) {
               // 실행 중이었다면: 목표 시간 - 현재 시간 = 남은 시간
@@ -362,10 +365,16 @@ export default function TimerApp({
             // [스톱워치 복구]
             if (state.stopwatch.isRunning && state.stopwatch.startTime) {
               // 실행 중이었다면: 현재 시간 - 시작 시간 = 흐른 시간
-              const elapsed = Math.floor((now - state.stopwatch.startTime) / 1000);
-              setStopwatchTime(elapsed);
-              setIsStopwatchRunning(true);
-              stopwatchStartTimeRef.current = state.stopwatch.startTime; // Ref 복구 필수
+              // Validate startTime (must be > 2024-01-01 approx)
+              if (state.stopwatch.startTime > 1704067200000) {
+                const elapsed = Math.floor((now - state.stopwatch.startTime) / 1000);
+                setStopwatchTime(elapsed);
+                setIsStopwatchRunning(true);
+                stopwatchStartTimeRef.current = state.stopwatch.startTime; // Ref 복구 필수
+              } else {
+                setStopwatchTime(0);
+                setIsStopwatchRunning(false);
+              }
             } else {
               setStopwatchTime(state.stopwatch.elapsed);
               setIsStopwatchRunning(false);
@@ -373,7 +382,8 @@ export default function TimerApp({
 
             // ✨ [New] Restore Intervals
             if (state.intervals) {
-              setIntervals(state.intervals);
+              // Filter out invalid intervals
+              setIntervals(state.intervals.filter(i => i.start > 0 && i.end > 0));
             }
 
             // ✨ [New] Restore Current Interval Start if running
@@ -544,9 +554,15 @@ export default function TimerApp({
           currentSessionIntervals.push({ start: currentIntervalStartRef.current, end: now });
         }
 
+        // Filter invalid intervals
+        currentSessionIntervals = currentSessionIntervals.filter(i => i.start > 0 && i.end > 0);
+
         // If no intervals (e.g. very short run), just use total duration
         if (currentSessionIntervals.length === 0) {
-          currentSessionIntervals.push({ start: now - duration * 1000, end: now });
+          // Validate duration before using fallback
+          if (duration > 0 && duration < 24 * 60 * 60) {
+            currentSessionIntervals.push({ start: now - duration * 1000, end: now });
+          }
         }
 
         const rowsToInsert = currentSessionIntervals.map(interval => ({
@@ -557,7 +573,7 @@ export default function TimerApp({
           task_id: selectedTaskId,
           created_at: new Date(interval.end).toISOString(), // Use interval end time
           group_id: groupId, // ✨ Link them together
-        })).filter(row => row.duration > 0); // Filter out 0s intervals
+        })).filter(row => row.duration > 0 && row.duration < 24 * 60 * 60); // Filter out 0s and huge intervals
 
         if (rowsToInsert.length === 0) {
           // Fallback if something went wrong with intervals
