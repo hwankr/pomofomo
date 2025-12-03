@@ -877,6 +877,18 @@ export default function TimerApp({
   const resetStopwatch = () => {
     setIsStopwatchRunning(false);
     setStopwatchTime(0);
+    saveState(
+      tab,
+      timerMode,
+      isRunning,
+      timeLeft,
+      null,
+      cycleCount,
+      focusLoggedSeconds,
+      false,
+      0,
+      null
+    );
   };
 
   const resetTimerManual = () => {
