@@ -11,14 +11,20 @@ export function useAuthSession() {
     const checkSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        
+
         if (error) {
-          console.error('Error getting session:', error);
-          // If refresh token is invalid, sign out to clear storage
-          if (error.message && (
-            error.message.includes('Refresh Token Not Found') || 
+          // Only log error if it's NOT a refresh token issue
+          const isRefreshTokenError = error.message && (
+            error.message.includes('Refresh Token Not Found') ||
             error.message.includes('Invalid Refresh Token')
-          )) {
+          );
+
+          if (!isRefreshTokenError) {
+            console.error('Error getting session:', error);
+          }
+
+          // If refresh token is invalid, sign out to clear storage
+          if (isRefreshTokenError) {
             await supabase.auth.signOut();
             setSession(null);
           }
