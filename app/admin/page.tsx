@@ -22,6 +22,32 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchData();
+
+    // Real-time subscription for profile updates
+    const channel = supabase
+      .channel('admin-dashboard-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+        },
+        (payload) => {
+          setUsers((prevUsers) =>
+            prevUsers.map((user) =>
+              user.id === payload.new.id
+                ? { ...user, ...payload.new }
+                : user
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchData = async () => {
