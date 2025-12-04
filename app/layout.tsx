@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import { Toaster } from 'react-hot-toast';
 import FriendNotificationListener from '@/components/FriendNotificationListener';
 import InstallPrompt from '@/components/InstallPrompt';
+import NotificationPermission from '@/components/NotificationPermission';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -48,6 +49,7 @@ export default function RootLayout({
           <FriendNotificationListener />
           <main className="flex-grow">{children}</main>
           <InstallPrompt />
+          <NotificationPermission />
           <Footer />
         </ThemeProvider>
       </body>

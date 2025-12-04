@@ -32,8 +32,8 @@ export default function AddFriend({ session, onFriendAdded }: AddFriendProps) {
       setEmail('');
       onFriendAdded();
     } catch (error: any) {
-      console.error('Error adding friend:', error);
-      setMessage({ type: 'error', text: error.message || '요청 전송에 실패했습니다.' });
+      console.error('Error adding friend:', JSON.stringify(error, null, 2));
+      setMessage({ type: 'error', text: error.message || error.error_description || '요청 전송에 실패했습니다.' });
     } finally {
 
       setLoading(false);
