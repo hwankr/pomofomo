@@ -203,7 +203,7 @@ export default function TimerApp({
   };
 
   // ✨ [New] Update Status Helper
-  const updateStatus = useCallback(async (status: 'studying' | 'paused' | 'online' | 'offline', task?: string) => {
+  const updateStatus = useCallback(async (status: 'studying' | 'paused' | 'online' | 'offline', task?: string, startTime?: string) => {
     if (!user) return;
     try {
       // Use provided task, or selectedTask state, or fallback to empty string
@@ -217,6 +217,7 @@ export default function TimerApp({
         status,
         current_task: isPublic ? taskTitle : null, // Hide task if private
         last_active_at: new Date().toISOString(),
+        study_start_time: startTime || null,
       }).eq('id', user.id);
     } catch (e) {
       console.error('Failed to update status', e);
@@ -224,14 +225,27 @@ export default function TimerApp({
   }, [user, selectedTask]);
 
   // ✨ [New] Real-time task update while running
+  // ✨ [New] Real-time task update while running
   useEffect(() => {
     if ((isRunning || isStopwatchRunning) && user) {
       const timer = setTimeout(() => {
-        updateStatus('studying');
+        let startTime = undefined;
+        if (isRunning) {
+          const fullTime =
+            timerMode === 'focus'
+              ? settings.pomoTime * 60
+              : timerMode === 'shortBreak'
+              ? settings.shortBreak * 60
+              : settings.longBreak * 60;
+          startTime = new Date(endTimeRef.current - fullTime * 1000).toISOString();
+        } else if (isStopwatchRunning) {
+          startTime = new Date(stopwatchStartTimeRef.current).toISOString();
+        }
+        updateStatus('studying', undefined, startTime);
       }, 1000); // Debounce 1s
       return () => clearTimeout(timer);
     }
-  }, [selectedTask, selectedTaskId, isRunning, isStopwatchRunning, updateStatus, user]);
+  }, [selectedTask, selectedTaskId, isRunning, isStopwatchRunning, updateStatus, user, timerMode, settings]);
 
   useEffect(() => {
     fetchDbTasks();

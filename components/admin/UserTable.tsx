@@ -1,12 +1,41 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Profile } from '@/lib/types';
 import { Search, MoreVertical, Shield } from 'lucide-react';
 
 interface UserTableProps {
   users: Profile[];
   onUserClick: (userId: string) => void;
+}
+
+function StudyDuration({ startTime }: { startTime: string }) {
+  const [duration, setDuration] = useState('');
+
+  useEffect(() => {
+    const update = () => {
+      const start = new Date(startTime).getTime();
+      const now = Date.now();
+      const diff = Math.floor((now - start) / 1000);
+      if (diff < 0) {
+        setDuration('00:00');
+        return;
+      }
+      const h = Math.floor(diff / 3600);
+      const m = Math.floor((diff % 3600) / 60);
+      const s = diff % 60;
+      setDuration(
+        `${h > 0 ? h + ':' : ''}${m.toString().padStart(2, '0')}:${s
+          .toString()
+          .padStart(2, '0')}`
+      );
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [startTime]);
+
+  return <span>{duration}</span>;
 }
 
 export default function UserTable({ users, onUserClick }: UserTableProps) {
@@ -82,11 +111,21 @@ export default function UserTable({ users, onUserClick }: UserTableProps) {
                         : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
                     }`}
                   >
-                    {user.status === 'online'
-                      ? '온라인'
-                      : user.status === 'studying'
-                      ? '공부 중'
-                      : '오프라인'}
+                    {user.status === 'online' ? (
+                      '온라인'
+                    ) : user.status === 'studying' ? (
+                      <span className="flex items-center gap-1">
+                        공부 중
+                        {user.study_start_time && (
+                          <>
+                            <span className="mx-1">•</span>
+                            <StudyDuration startTime={user.study_start_time} />
+                          </>
+                        )}
+                      </span>
+                    ) : (
+                      '오프라인'
+                    )}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-gray-600 dark:text-gray-300">

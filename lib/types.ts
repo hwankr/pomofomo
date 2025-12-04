@@ -7,6 +7,7 @@ export interface Profile {
   last_active_at?: string | null;
   role?: 'user' | 'admin';
   created_at?: string;
+  study_start_time?: string | null;
 }
 
 export interface StudySession {
