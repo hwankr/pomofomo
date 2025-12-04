@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { CheckCircle2, Circle, Plus, Trash2, Calendar as CalendarIcon, ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePersistedState } from '@/hooks/usePersistedState';
+import ConfirmModal from '@/components/ConfirmModal';
 
 interface MonthlyPlan {
   id: string;
@@ -25,6 +26,7 @@ export default function MonthlyPlan({ userId }: MonthlyPlanProps) {
   const [newPlanTitle, setNewPlanTitle] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [isExpanded, setIsExpanded] = usePersistedState('monthly_plan_expanded', true);
+  const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null);
 
   // Calculate current month and year
   const today = new Date();
@@ -39,7 +41,7 @@ export default function MonthlyPlan({ userId }: MonthlyPlanProps) {
     }
 
     setLoading(true);
-    
+
     const { data, error } = await supabase
       .from('monthly_plans')
       .select('*')
@@ -91,7 +93,7 @@ export default function MonthlyPlan({ userId }: MonthlyPlanProps) {
 
   const togglePlanStatus = async (plan: MonthlyPlan) => {
     const newStatus = plan.status === 'done' ? 'todo' : 'done';
-    
+
     const { error } = await supabase
       .from('monthly_plans')
       .update({ status: newStatus })
@@ -104,8 +106,14 @@ export default function MonthlyPlan({ userId }: MonthlyPlanProps) {
     }
   };
 
-  const deletePlan = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this plan?')) return;
+  const deletePlan = (id: string) => {
+    setDeletingPlanId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingPlanId) return;
+
+    const id = deletingPlanId;
 
     const { error } = await supabase
       .from('monthly_plans')
@@ -121,7 +129,7 @@ export default function MonthlyPlan({ userId }: MonthlyPlanProps) {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex flex-col transition-all duration-300">
-      <div 
+      <div
         className="flex justify-between items-center mb-6 cursor-pointer lg:cursor-default"
         onClick={() => setIsExpanded(!isExpanded)}
       >
@@ -141,98 +149,110 @@ export default function MonthlyPlan({ userId }: MonthlyPlanProps) {
 
       <div className={cn("flex-1 flex flex-col transition-all duration-300", !isExpanded && "hidden lg:flex")}>
 
-      <div className="flex-1 overflow-y-auto space-y-3 max-h-[300px] min-h-[100px] custom-scrollbar">
-        {loading ? (
-          <div className="text-center text-gray-400 py-6">Loading...</div>
-        ) : plans.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400 py-6">
-            <p className="text-sm">No goals for this month.</p>
-            {!isAdding && (
-              <button 
-                onClick={() => setIsAdding(true)}
-                className="mt-2 text-purple-500 hover:text-purple-600 font-medium text-sm"
+        <div className="flex-1 overflow-y-auto space-y-3 max-h-[300px] min-h-[100px] custom-scrollbar">
+          {loading ? (
+            <div className="text-center text-gray-400 py-6">Loading...</div>
+          ) : plans.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-400 py-6">
+              <p className="text-sm">No goals for this month.</p>
+              {!isAdding && (
+                <button
+                  onClick={() => setIsAdding(true)}
+                  className="mt-2 text-purple-500 hover:text-purple-600 font-medium text-sm"
+                >
+                  + Set a goal
+                </button>
+              )}
+            </div>
+          ) : (
+            plans.map((plan) => (
+              <div
+                key={plan.id}
+                className="group flex items-center gap-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-transparent hover:border-purple-200 dark:hover:border-purple-800 transition-all"
               >
-                + Set a goal
-              </button>
-            )}
-          </div>
-        ) : (
-          plans.map((plan) => (
-            <div
-              key={plan.id}
-              className="group flex items-center gap-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-transparent hover:border-purple-200 dark:hover:border-purple-800 transition-all"
+                <button
+                  onClick={() => togglePlanStatus(plan)}
+                  className={cn(
+                    "flex-shrink-0 transition-colors",
+                    plan.status === 'done' ? "text-purple-500" : "text-gray-400 hover:text-purple-400"
+                  )}
+                >
+                  {plan.status === 'done' ? (
+                    <CheckCircle2 className="w-5 h-5" />
+                  ) : (
+                    <Circle className="w-5 h-5" />
+                  )}
+                </button>
+
+                <span className={cn(
+                  "flex-1 text-sm font-medium transition-all",
+                  plan.status === 'done' ? "text-gray-400 line-through" : "text-gray-700 dark:text-gray-200"
+                )}>
+                  {plan.title}
+                </span>
+
+                <button
+                  onClick={() => deletePlan(plan.id)}
+                  className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 transition-all"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+          {isAdding ? (
+            <form onSubmit={addPlan} className="flex flex-col gap-3">
+              <input
+                type="text"
+                value={newPlanTitle}
+                onChange={(e) => setNewPlanTitle(e.target.value)}
+                placeholder="This month's goal..."
+                className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:text-white"
+                autoFocus
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAdding(false)}
+                  className="px-3 py-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!newPlanTitle.trim()}
+                  className="px-4 py-2 bg-purple-500 text-white font-bold rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+                >
+                  Add
+                </button>
+              </div>
+            </form>
+          ) : (
+            <button
+              onClick={() => setIsAdding(true)}
+              className="w-full py-3 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl text-gray-400 hover:text-purple-500 hover:border-purple-200 dark:hover:text-purple-400 dark:hover:border-purple-800 transition-all flex items-center justify-center gap-2 font-medium text-sm"
             >
-              <button
-                onClick={() => togglePlanStatus(plan)}
-                className={cn(
-                  "flex-shrink-0 transition-colors",
-                  plan.status === 'done' ? "text-purple-500" : "text-gray-400 hover:text-purple-400"
-                )}
-              >
-                {plan.status === 'done' ? (
-                  <CheckCircle2 className="w-5 h-5" />
-                ) : (
-                  <Circle className="w-5 h-5" />
-                )}
-              </button>
-              
-              <span className={cn(
-                "flex-1 text-sm font-medium transition-all",
-                plan.status === 'done' ? "text-gray-400 line-through" : "text-gray-700 dark:text-gray-200"
-              )}>
-                {plan.title}
-              </span>
-
-              <button
-                onClick={() => deletePlan(plan.id)}
-                className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 transition-all"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ))
-        )}
+              <Plus className="w-4 h-4" />
+              Add Monthly Goal
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-        {isAdding ? (
-          <form onSubmit={addPlan} className="flex flex-col gap-3">
-            <input
-              type="text"
-              value={newPlanTitle}
-              onChange={(e) => setNewPlanTitle(e.target.value)}
-              placeholder="This month's goal..."
-              className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:text-white"
-              autoFocus
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setIsAdding(false)}
-                className="px-3 py-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-sm"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={!newPlanTitle.trim()}
-                className="px-4 py-2 bg-purple-500 text-white font-bold rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-              >
-                Add
-              </button>
-            </div>
-          </form>
-        ) : (
-          <button
-            onClick={() => setIsAdding(true)}
-            className="w-full py-3 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl text-gray-400 hover:text-purple-500 hover:border-purple-200 dark:hover:text-purple-400 dark:hover:border-purple-800 transition-all flex items-center justify-center gap-2 font-medium text-sm"
-          >
-            <Plus className="w-4 h-4" />
-            Add Monthly Goal
-          </button>
-        )}
-      </div>
-      </div>
-    </div>
+
+      <ConfirmModal
+        isOpen={!!deletingPlanId}
+        onClose={() => setDeletingPlanId(null)}
+        onConfirm={confirmDelete}
+        title="목표 삭제"
+        message="이 목표를 삭제하시겠습니까? 삭제된 목표는 복구할 수 없습니다."
+        confirmText="삭제"
+        cancelText="취소"
+        isDangerous={true}
+      />
+    </div >
   );
 }
