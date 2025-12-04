@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { CheckCircle2, Circle, Plus, Trash2, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ConfirmModal from '@/components/ConfirmModal';
 import {
   DndContext,
   closestCenter,
@@ -123,6 +124,7 @@ export default function TaskList({ selectedDate, userId }: TaskListProps) {
   const [loading, setLoading] = useState(true);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -279,8 +281,14 @@ export default function TaskList({ selectedDate, userId }: TaskListProps) {
     }
   };
 
-  const deleteTask = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this task?')) return;
+  const deleteTask = (id: string) => {
+    setDeletingTaskId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingTaskId) return;
+
+    const id = deletingTaskId;
 
     // Optimistic update
     setTasks(tasks.filter(t => t.id !== id));
@@ -373,6 +381,18 @@ export default function TaskList({ selectedDate, userId }: TaskListProps) {
           </button>
         )}
       </div>
-    </div>
+
+
+      <ConfirmModal
+        isOpen={!!deletingTaskId}
+        onClose={() => setDeletingTaskId(null)}
+        onConfirm={confirmDelete}
+        title="작업 삭제"
+        message="이 작업을 삭제하시겠습니까? 삭제된 작업은 복구할 수 없습니다."
+        confirmText="삭제"
+        cancelText="취소"
+        isDangerous={true}
+      />
+    </div >
   );
 }
