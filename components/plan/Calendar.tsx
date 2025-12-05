@@ -16,7 +16,7 @@ import {
 } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getHolidays } from '@kyungseopk1m/holidays-kr';
+import { holidays } from '@kyungseopk1m/holidays-kr';
 
 interface CalendarProps {
   selectedDate: Date;
@@ -31,7 +31,7 @@ export default function Calendar({ selectedDate, onSelectDate }: CalendarProps) 
     const fetchHolidays = async () => {
       const year = currentMonth.getFullYear();
       try {
-        const response = await getHolidays(year.toString());
+        const response = await holidays(year.toString());
         if (response && response.data) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const dates = response.data.map((h: any) => typeof h.date === 'string' ? parseInt(h.date) : h.date);
