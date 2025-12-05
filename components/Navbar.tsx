@@ -45,6 +45,7 @@ export default function Navbar({
         { href: '/plan', label: '계획' },
         { href: '/friends', label: '친구' },
         { href: '/groups', label: '그룹' },
+        { href: '/feedback', label: '피드백' },
     ];
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -70,7 +71,7 @@ export default function Navbar({
                                         className="object-cover"
                                     />
                                 </div>
-                                <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-rose-500 to-orange-500 hidden sm:block">
+                                <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-rose-500 to-orange-500 block">
                                     Fomopomo
                                 </span>
                             </Link>

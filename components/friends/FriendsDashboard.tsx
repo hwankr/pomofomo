@@ -6,7 +6,8 @@ import { supabase } from '@/lib/supabase';
 import AddFriend from './AddFriend';
 import FriendRequestList from './FriendRequestList';
 import FriendList from './FriendList';
-import TimerStatus from '../TimerStatus';
+import Navbar from '../Navbar';
+import { useTheme } from '../ThemeProvider';
 
 interface FriendsDashboardProps {
   session: Session | null;
@@ -24,48 +25,24 @@ export default function FriendsDashboard({ session }: FriendsDashboardProps) {
     await supabase.auth.signOut();
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans">
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-            <span className="hidden sm:inline">Back to Timer</span>
-          </Link>
-          <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2"></div>
-          <h1 className="text-xl font-bold tracking-tight">Friends</h1>
-          <div className="hidden sm:block">
-            <TimerStatus />
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
-            {session?.user?.email || 'Guest'}
-          </div>
-          {session ? (
-            <button
-              onClick={handleLogout}
-              className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
-            >
-              Log out
-            </button>
-          ) : (
-            <button
-              onClick={() => supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                  redirectTo: window.location.origin,
-                },
-              })}
-              className="text-sm text-rose-500 hover:text-rose-600 font-medium transition-colors"
-            >
-              Log in
-            </button>
-          )}
-        </div>
-      </header>
+  const { isDarkMode, toggleDarkMode } = useTheme();
 
-      <main className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans p-4 sm:p-6 lg:p-8">
+      <Navbar
+        session={session}
+        isDarkMode={isDarkMode}
+        toggleDarkMode={toggleDarkMode}
+        onLogout={handleLogout}
+        onOpenLogin={() => supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: window.location.origin,
+          },
+        })}
+      />
+
+      <main className="max-w-6xl mx-auto">
         {!session ? (
           <div className="flex items-center justify-center h-[calc(100vh-200px)]">
             <p className="text-gray-500">Please sign in to manage friends.</p>

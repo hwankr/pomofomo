@@ -122,12 +122,26 @@ export default function AdminPage() {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               관리자 대시보드
             </h1>
-            <button
-              onClick={() => router.push('/')}
-              className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700"
-            >
-              앱으로 돌아가기
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => router.push('/admin/feedback')}
+                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+              >
+                피드백 관리
+              </button>
+              <button
+                onClick={() => router.push('/admin/changelog')}
+                className="px-4 py-2 text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors shadow-sm"
+              >
+                패치노트 관리
+              </button>
+              <button
+                onClick={() => router.push('/')}
+                className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700 transition-colors"
+              >
+                앱으로 돌아가기
+              </button>
+            </div>
           </div>
 
           <DashboardStats {...stats} />

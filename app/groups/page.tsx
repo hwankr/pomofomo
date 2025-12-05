@@ -6,6 +6,8 @@ import { useAuthSession } from '@/hooks/useAuthSession';
 import Link from 'next/link';
 import CreateGroupModal from '@/components/CreateGroupModal';
 import JoinGroupModal from '@/components/JoinGroupModal';
+import Navbar from '@/components/Navbar';
+import { useTheme } from '@/components/ThemeProvider';
 
 
 interface Group {
@@ -16,6 +18,7 @@ interface Group {
 
 export default function GroupsPage() {
     const { session, loading: sessionLoading } = useAuthSession();
+    const { isDarkMode, toggleDarkMode } = useTheme();
     const [groups, setGroups] = useState<Group[]>([]);
     const [groupsLoading, setGroupsLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -53,15 +56,14 @@ export default function GroupsPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-slate-900 p-4 sm:p-8">
-
+            <Navbar
+                session={session}
+                isDarkMode={isDarkMode}
+                toggleDarkMode={toggleDarkMode}
+                onLogout={() => supabase.auth.signOut()}
+            />
             <div className="max-w-4xl mx-auto">
                 <div className="mb-8">
-                    <Link
-                        href="/"
-                        className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white mb-4 flex items-center gap-1"
-                    >
-                        ← 홈으로 돌아가기
-                    </Link>
                     <div className="flex justify-between items-center">
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">내 그룹</h1>
                         <div className="flex gap-4">
