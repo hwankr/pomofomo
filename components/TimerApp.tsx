@@ -297,7 +297,8 @@ export default function TimerApp({
     tLogged: number,
     sRunning: boolean,
     sElapsed: number,
-    sStart: number | null
+    sStart: number | null,
+    currentIntervals: { start: number; end: number }[] // ✨ [Changed] Accept intervals as argument
   ) => {
     const state: SavedState = {
       activeTab: currentTab,
@@ -314,7 +315,7 @@ export default function TimerApp({
         elapsed: sElapsed,
         startTime: sStart,
       },
-      intervals: intervals, // ✨ Save intervals
+      intervals: currentIntervals, // ✨ [Changed] Use argument
       lastUpdated: Date.now(),
     };
     localStorage.setItem("fomopomo_full_state", JSON.stringify(state));
@@ -623,7 +624,7 @@ export default function TimerApp({
         currentIntervalStartRef.current = null;
       }
     },
-    [onRecordSaved]
+    [onRecordSaved, intervals, selectedTaskId, selectedTask] // ✨ [Changed] Added dependencies
   ); // ✅ 의존성 추가
 
   const triggerSave = useCallback(
@@ -736,7 +737,8 @@ export default function TimerApp({
         elapsed,
         isStopwatchRunning,
         stopwatchTime,
-        null
+        null,
+        intervals // ✨ [Changed] Pass current intervals
       );
     }
   }, [
@@ -829,13 +831,15 @@ export default function TimerApp({
       setIsRunning(false);
 
       // ✨ [New] Record Interval
+      let newIntervals = intervals;
       if (currentIntervalStartRef.current) {
-        setIntervals(prev => [...prev, { start: currentIntervalStartRef.current!, end: Date.now() }]);
+        newIntervals = [...intervals, { start: currentIntervalStartRef.current!, end: Date.now() }];
+        setIntervals(newIntervals);
         currentIntervalStartRef.current = null;
       }
 
       // 💾 정지 상태 저장 (현재 남은 시간)
-      saveState(tab, timerMode, false, timeLeft, null, cycleCount, focusLoggedSeconds, isStopwatchRunning, stopwatchTime, null);
+      saveState(tab, timerMode, false, timeLeft, null, cycleCount, focusLoggedSeconds, isStopwatchRunning, stopwatchTime, null, newIntervals);
       updateStatus('paused');
     } else {
       // [시작]
@@ -847,7 +851,7 @@ export default function TimerApp({
       currentIntervalStartRef.current = Date.now();
 
       // 💾 실행 상태 저장 (목표 종료 시간)
-      saveState(tab, timerMode, true, timeLeft, target, cycleCount, focusLoggedSeconds, isStopwatchRunning, stopwatchTime, null);
+      saveState(tab, timerMode, true, timeLeft, target, cycleCount, focusLoggedSeconds, isStopwatchRunning, stopwatchTime, null, intervals);
       updateStatus('studying');
     }
   }, [isStopwatchRunning, isRunning, timeLeft, timerMode, cycleCount, saveState, tab, stopwatchTime, focusLoggedSeconds, playClickSound, intervals]);
@@ -919,8 +923,10 @@ export default function TimerApp({
     setTimeLeft(newTime);
     if (mode === 'focus') setFocusLoggedSeconds(0);
 
+    setIntervals([]); // ✨ Clear intervals for new mode
+
     // 💾 변경된 모드 상태 저장
-    saveState(tab, mode, false, newTime, null, cycleCount, mode === 'focus' ? 0 : focusLoggedSeconds, isStopwatchRunning, stopwatchTime, null);
+    saveState(tab, mode, false, newTime, null, cycleCount, mode === 'focus' ? 0 : focusLoggedSeconds, isStopwatchRunning, stopwatchTime, null, []);
   };
 
   const handlePresetClick = (minutes: number) => {
@@ -934,8 +940,10 @@ export default function TimerApp({
     setFocusLoggedSeconds(0);
     setSettings(prev => ({ ...prev, pomoTime: minutes }));
 
+    setIntervals([]); // ✨ Clear intervals for new preset
+
     // 💾 프리셋 변경 저장
-    saveState(tab, "focus", false, minutes * 60, null, cycleCount, 0, isStopwatchRunning, stopwatchTime, null);
+    saveState(tab, "focus", false, minutes * 60, null, cycleCount, 0, isStopwatchRunning, stopwatchTime, null, []);
     toast.success(`${minutes === 0.1 ? '5초' : minutes + '분'}으로 설정됨`);
   };
 
@@ -953,13 +961,15 @@ export default function TimerApp({
       setIsStopwatchRunning(false);
 
       // ✨ [New] Record Interval
+      let newIntervals = intervals;
       if (currentIntervalStartRef.current) {
-        setIntervals(prev => [...prev, { start: currentIntervalStartRef.current!, end: Date.now() }]);
+        newIntervals = [...intervals, { start: currentIntervalStartRef.current!, end: Date.now() }];
+        setIntervals(newIntervals);
         currentIntervalStartRef.current = null;
       }
 
       // 💾 정지 상태 저장 (현재 흐른 시간)
-      saveState(tab, timerMode, isRunning, timeLeft, null, cycleCount, focusLoggedSeconds, false, stopwatchTime, null);
+      saveState(tab, timerMode, isRunning, timeLeft, null, cycleCount, focusLoggedSeconds, false, stopwatchTime, null, newIntervals);
       updateStatus('paused');
     } else {
       // [시작]
@@ -972,7 +982,7 @@ export default function TimerApp({
       currentIntervalStartRef.current = Date.now();
 
       // 💾 실행 상태 저장 (시작 시간)
-      saveState(tab, timerMode, isRunning, timeLeft, null, cycleCount, focusLoggedSeconds, true, stopwatchTime, start);
+      saveState(tab, timerMode, isRunning, timeLeft, null, cycleCount, focusLoggedSeconds, true, stopwatchTime, start, intervals);
       updateStatus('studying');
     }
   }, [isRunning, isStopwatchRunning, saveState, tab, timerMode, timeLeft, cycleCount, focusLoggedSeconds, stopwatchTime, playClickSound, intervals]);
@@ -994,7 +1004,8 @@ export default function TimerApp({
         focusLoggedSeconds,
         false,
         0,
-        null
+        null,
+        [] // ✨ [Changed] Reset intervals
       );
     };
 
@@ -1016,7 +1027,8 @@ export default function TimerApp({
       focusLoggedSeconds,
       false,
       0,
-      null
+      null,
+      [] // ✨ [Changed] Reset intervals
     );
   };
 
@@ -1034,7 +1046,7 @@ export default function TimerApp({
     setIntervals([]); // ✨ Reset intervals
     currentIntervalStartRef.current = null;
     // 💾 초기화 상태 저장
-    saveState(tab, timerMode, false, resetTime, null, cycleCount, timerMode === 'focus' ? 0 : focusLoggedSeconds, isStopwatchRunning, stopwatchTime, null);
+    saveState(tab, timerMode, false, resetTime, null, cycleCount, timerMode === 'focus' ? 0 : focusLoggedSeconds, isStopwatchRunning, stopwatchTime, null, []);
   };
 
   // Cleanup intervals on unmount is handled by useEffect now
