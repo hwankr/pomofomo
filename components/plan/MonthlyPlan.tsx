@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 import { CheckCircle2, Circle, Plus, Trash2, Calendar as CalendarIcon, ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePersistedState } from '@/hooks/usePersistedState';
@@ -136,10 +137,10 @@ export default function MonthlyPlan({ userId }: MonthlyPlanProps) {
         <div>
           <h2 className="text-lg font-bold flex items-center gap-2">
             <CalendarIcon className="w-5 h-5 text-purple-500" />
-            Monthly Goals
+            월간 목표
           </h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {format(today, 'MMMM yyyy')}
+            {format(today, 'yyyy년 M월', { locale: ko })}
           </p>
         </div>
         <div className="lg:hidden text-gray-400">
@@ -154,13 +155,13 @@ export default function MonthlyPlan({ userId }: MonthlyPlanProps) {
             <div className="text-center text-gray-400 py-6">Loading...</div>
           ) : plans.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 py-6">
-              <p className="text-sm">No goals for this month.</p>
+              <p className="text-sm">이번 달 목표가 없습니다.</p>
               {!isAdding && (
                 <button
                   onClick={() => setIsAdding(true)}
                   className="mt-2 text-purple-500 hover:text-purple-600 font-medium text-sm"
                 >
-                  + Set a goal
+                  + 목표 설정
                 </button>
               )}
             </div>
@@ -209,7 +210,7 @@ export default function MonthlyPlan({ userId }: MonthlyPlanProps) {
                 type="text"
                 value={newPlanTitle}
                 onChange={(e) => setNewPlanTitle(e.target.value)}
-                placeholder="This month's goal..."
+                placeholder="이번 달 목표..."
                 className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:text-white"
                 autoFocus
               />
@@ -219,14 +220,14 @@ export default function MonthlyPlan({ userId }: MonthlyPlanProps) {
                   onClick={() => setIsAdding(false)}
                   className="px-3 py-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-sm"
                 >
-                  Cancel
+                  취소
                 </button>
                 <button
                   type="submit"
                   disabled={!newPlanTitle.trim()}
                   className="px-4 py-2 bg-purple-500 text-white font-bold rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
                 >
-                  Add
+                  추가
                 </button>
               </div>
             </form>
@@ -236,7 +237,7 @@ export default function MonthlyPlan({ userId }: MonthlyPlanProps) {
               className="w-full py-3 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl text-gray-400 hover:text-purple-500 hover:border-purple-200 dark:hover:text-purple-400 dark:hover:border-purple-800 transition-all flex items-center justify-center gap-2 font-medium text-sm"
             >
               <Plus className="w-4 h-4" />
-              Add Monthly Goal
+              월간 목표 추가
             </button>
           )}
         </div>

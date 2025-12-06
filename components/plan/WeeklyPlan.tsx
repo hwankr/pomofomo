@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
+import { ko } from 'date-fns/locale';
 import { CheckCircle2, Circle, Plus, Trash2, Calendar as CalendarIcon, ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePersistedState } from '@/hooks/usePersistedState';
@@ -138,10 +139,10 @@ export default function WeeklyPlan({ userId }: WeeklyPlanProps) {
         <div>
           <h2 className="text-lg font-bold flex items-center gap-2">
             <CalendarIcon className="w-5 h-5 text-indigo-500" />
-            Weekly Goals
+            주간 목표
           </h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {format(start, 'MMM d')} - {format(end, 'MMM d')}
+            {format(start, 'M월 d일', { locale: ko })} - {format(end, 'M월 d일', { locale: ko })}
           </p>
         </div>
         <div className="lg:hidden text-gray-400">
@@ -156,13 +157,13 @@ export default function WeeklyPlan({ userId }: WeeklyPlanProps) {
             <div className="text-center text-gray-400 py-6">Loading...</div>
           ) : plans.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 py-6">
-              <p className="text-sm">No goals for this week.</p>
+              <p className="text-sm">이번 주 목표가 없습니다.</p>
               {!isAdding && (
                 <button
                   onClick={() => setIsAdding(true)}
                   className="mt-2 text-indigo-500 hover:text-indigo-600 font-medium text-sm"
                 >
-                  + Set a goal
+                  + 목표 설정
                 </button>
               )}
             </div>
@@ -211,7 +212,7 @@ export default function WeeklyPlan({ userId }: WeeklyPlanProps) {
                 type="text"
                 value={newPlanTitle}
                 onChange={(e) => setNewPlanTitle(e.target.value)}
-                placeholder="This week's goal..."
+                placeholder="이번 주 목표..."
                 className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white"
                 autoFocus
               />
@@ -221,14 +222,14 @@ export default function WeeklyPlan({ userId }: WeeklyPlanProps) {
                   onClick={() => setIsAdding(false)}
                   className="px-3 py-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-sm"
                 >
-                  Cancel
+                  취소
                 </button>
                 <button
                   type="submit"
                   disabled={!newPlanTitle.trim()}
                   className="px-4 py-2 bg-indigo-500 text-white font-bold rounded-lg hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
                 >
-                  Add
+                  추가
                 </button>
               </div>
             </form>
@@ -238,7 +239,7 @@ export default function WeeklyPlan({ userId }: WeeklyPlanProps) {
               className="w-full py-3 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl text-gray-400 hover:text-indigo-500 hover:border-indigo-200 dark:hover:text-indigo-400 dark:hover:border-indigo-800 transition-all flex items-center justify-center gap-2 font-medium text-sm"
             >
               <Plus className="w-4 h-4" />
-              Add Weekly Goal
+              주간 목표 추가
             </button>
           )}
         </div>

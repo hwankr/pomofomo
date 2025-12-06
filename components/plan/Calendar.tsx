@@ -14,6 +14,7 @@ import {
   subMonths,
   isToday,
 } from 'date-fns';
+import { ko } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getKoreanHolidays } from '@/actions/holidays';
@@ -55,7 +56,7 @@ export default function Calendar({ selectedDate, onSelectDate }: CalendarProps) 
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-          {format(currentMonth, 'MMMM yyyy')}
+          {format(currentMonth, 'yyyy년 M월', { locale: ko })}
         </h2>
         <div className="flex items-center gap-2">
           <button

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 import Calendar from './Calendar';
 import { cn } from '@/lib/utils';
 import TaskList from './TaskList';
@@ -114,11 +115,11 @@ export default function Dashboard({ session }: DashboardProps) {
 
             {/* 2. Daily Focus */}
             <div className="order-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl p-6 border border-indigo-100 dark:border-indigo-800/50">
-              <h3 className="text-indigo-900 dark:text-indigo-100 font-semibold mb-2">Daily Focus</h3>
+              <h3 className="text-indigo-900 dark:text-indigo-100 font-semibold mb-2">오늘의 집중 시간</h3>
               <p className="text-indigo-600 dark:text-indigo-300 text-sm">
-                You focused for <span className="font-bold text-2xl block mt-2">{formatDuration(focusTime)}</span>
+                <span className="font-bold text-2xl block mt-2">{formatDuration(focusTime)}</span>
                 <br />
-                on {format(selectedDate, 'MMM d')}.
+                동안 집중했습니다.
               </p>
             </div>
 
@@ -141,10 +142,10 @@ export default function Dashboard({ session }: DashboardProps) {
               >
                 <div>
                   <h2 className="text-2xl font-bold">
-                    {format(selectedDate, 'MMMM d, yyyy')}
+                    {format(selectedDate, 'yyyy년 M월 d일', { locale: ko })}
                   </h2>
                   <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-                    {format(selectedDate, 'EEEE')}
+                    {format(selectedDate, 'EEEE', { locale: ko })}
                   </p>
                 </div>
                 <div className="lg:hidden text-gray-400">

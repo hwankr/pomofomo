@@ -308,18 +308,18 @@ export default function TaskList({ selectedDate, userId }: TaskListProps) {
     <div className="h-full flex flex-col">
       <div className="flex-1 overflow-y-auto space-y-3 min-h-[300px]">
         {loading && tasks.length === 0 ? (
-          <div className="text-center text-gray-400 py-10">Loading tasks...</div>
+          <div className="text-center text-gray-400 py-10">작업을 불러오는 중...</div>
         ) : tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400 py-10">
             <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
               <span className="text-2xl">📝</span>
             </div>
-            <p>No tasks for this day.</p>
+            <p>오늘의 작업이 없습니다.</p>
             <button
               onClick={() => setIsAdding(true)}
               className="mt-4 text-rose-500 hover:text-rose-600 font-medium text-sm"
             >
-              + Add your first task
+              + 첫 번째 작업 추가
             </button>
           </div>
         ) : (
@@ -352,7 +352,7 @@ export default function TaskList({ selectedDate, userId }: TaskListProps) {
               type="text"
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
-              placeholder="What needs to be done?"
+              placeholder="할 일을 입력하세요"
               className="flex-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 dark:text-white"
               autoFocus
             />
@@ -361,14 +361,14 @@ export default function TaskList({ selectedDate, userId }: TaskListProps) {
               disabled={!newTaskTitle.trim()}
               className="px-6 py-3 bg-rose-500 text-white font-bold rounded-xl hover:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Add
+              추가
             </button>
             <button
               type="button"
               onClick={() => setIsAdding(false)}
               className="px-4 py-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
             >
-              Cancel
+              취소
             </button>
           </form>
         ) : (
@@ -377,7 +377,7 @@ export default function TaskList({ selectedDate, userId }: TaskListProps) {
             className="w-full py-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl text-gray-400 hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 dark:hover:border-gray-600 transition-all flex items-center justify-center gap-2 font-medium"
           >
             <Plus className="w-5 h-5" />
-            Add Task
+            작업 추가
           </button>
         )}
       </div>
