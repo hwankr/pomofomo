@@ -287,6 +287,27 @@ export default function TimerApp({
       }, 1000);
     }
 
+    // ✨ Push Notification Trigger
+    if ('serviceWorker' in navigator && Notification.permission === 'granted') {
+      navigator.serviceWorker.ready.then(registration => {
+        const title = timerMode === 'focus' ? '집중 시간 종료! ☕' : '휴식 종료! 다시 집중해볼까요? 🔥';
+        const body = timerMode === 'focus' 
+          ? '수고하셨습니다. 잠시 머리를 식히세요.' 
+          : '휴식이 끝났습니다. 목표를 향해 다시 달려봐요!';
+        
+        registration.showNotification(title, {
+          body,
+          icon: '/icon-192x192.png',
+          requireInteraction: true,
+          tag: 'timer-complete',
+          renotify: true,
+          data: {
+            url: window.location.href
+          }
+        } as NotificationOptions);
+      });
+    }
+
     setIntervals([]);
     // currentIntervalStartRef.current = null; // Managed by hook, but we need to reset it? Hook exposes `currentIntervalStartRef`.
   }, [timerMode, settings, focusLoggedSeconds, cycleCount, triggerSave, playAlarm, setFocusLoggedSeconds, setCycleCount, setTimerMode, setTimeLeft, setIsRunning, setIntervals]);
