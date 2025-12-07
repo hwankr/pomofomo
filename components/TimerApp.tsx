@@ -18,6 +18,16 @@ import { TimerDisplay } from './timer/ui/TimerDisplay';
 import { StopwatchDisplay } from './timer/ui/StopwatchDisplay';
 import { ThemeBackground } from './timer/ui/ThemeBackground';
 
+// Helper to format time for Tab Title
+const formatTimeForTitle = (seconds: number) => {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0)
+    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+};
+
 interface TimerAppProps {
   settingsUpdated: number;
   onRecordSaved: () => void;
@@ -32,7 +42,7 @@ export default function TimerApp({
   const [tab, setTab] = useState<'timer' | 'stopwatch'>('timer');
   const [isTaskSidebarOpen, setIsTaskSidebarOpen] = useState(false);
   const [taskModalOpen, setTaskModalOpen] = useState(false);
-  
+
   // Pending record state for manual save popup
   const [pendingRecord, setPendingRecord] = useState<{
     mode: string;
@@ -79,7 +89,7 @@ export default function TimerApp({
   // 4.5. Callback Ref for Timer Completion (Must be defined before useTimerLogic)
   // We need to use a Ref because handleTimerComplete depends on state that changes,
   // but we want the callback passed to useTimerLogic to be stable to prevent interval resets.
-  const onTimerCompleteCallback = useRef<() => void>(() => {});
+  const onTimerCompleteCallback = useRef<() => void>(() => { });
 
   // 5. Timer Logic Hook
   const {
@@ -122,11 +132,11 @@ export default function TimerApp({
   // We'll handle timer completion effect here instead of passing a callback that needs future declarations.
   useEffect(() => {
     if (timeLeft === 0 && !isRunning && endTimeRef.current !== 0) { // Simple check
-       // But useTimerLogic handles setting it to 0.
-       // Let's rely on a specific prop or state from hook if possible,
-       // OR just define the function using `useCallback` with refs if we really want to pass it.
-       // Actually, we can just define the logic here in an effect if `timeLeft` hits 0 and we were running.
-       // BUT `useTimerLogic` stops running when it hits 0.
+      // But useTimerLogic handles setting it to 0.
+      // Let's rely on a specific prop or state from hook if possible,
+      // OR just define the function using `useCallback` with refs if we really want to pass it.
+      // Actually, we can just define the logic here in an effect if `timeLeft` hits 0 and we were running.
+      // BUT `useTimerLogic` stops running when it hits 0.
     }
   }, [timeLeft, isRunning]);
 
@@ -134,31 +144,31 @@ export default function TimerApp({
   // `useTimerLogic` calls `onTimerComplete`.
   // We can just pass an empty function and use an effect here to detect transitions.
   // OR clearer: pass the dependencies to `useTimerLogic`? No, too many.
-  
+
   // Let's use a Ref for the callback!
   const onTimerCompleteRef = useCallback(() => {
-      // Logic for timer completion
-        if (timerMode === 'focus') {
-            const duration = settings.pomoTime * 60;
-            const remaining = duration - focusLoggedSeconds;
-            if (remaining > 0) {
-                // Trigger Save
-                // We need to call generic triggerSave but that is not defined yet.
-                // This is the classic specialized hook dependency hell.
-                // Maybe `TimerDisplay` shouldn't be so decoupled?
-                // Or maybe `TimerApp` should be the coordinator.
-                // Let's define the complex logic functions *before* passing them?
-                // Can't, they depend on hook state.
-                
-                // Breaking the cycle:
-                // 1. `useTimerLogic` tells us "timer finished".
-                // 2. `TimerApp` observes this event and acts.
-                
-                // Let's stick to the `onTimerComplete` prop but make it stable or use a Ref.
-            }
-            // ...
-        }
-        // ...
+    // Logic for timer completion
+    if (timerMode === 'focus') {
+      const duration = settings.pomoTime * 60;
+      const remaining = duration - focusLoggedSeconds;
+      if (remaining > 0) {
+        // Trigger Save
+        // We need to call generic triggerSave but that is not defined yet.
+        // This is the classic specialized hook dependency hell.
+        // Maybe `TimerDisplay` shouldn't be so decoupled?
+        // Or maybe `TimerApp` should be the coordinator.
+        // Let's define the complex logic functions *before* passing them?
+        // Can't, they depend on hook state.
+
+        // Breaking the cycle:
+        // 1. `useTimerLogic` tells us "timer finished".
+        // 2. `TimerApp` observes this event and acts.
+
+        // Let's stick to the `onTimerComplete` prop but make it stable or use a Ref.
+      }
+      // ...
+    }
+    // ...
   }, [settings, focusLoggedSeconds, timerMode]); // dependencies will change
 
   // To solve this cleanly for now:
@@ -206,24 +216,24 @@ export default function TimerApp({
   }, []);
 
   // --- Handlers ---
-  
+
   // Saving Logic Helper
   const triggerSave = useCallback(async (recordMode: string, duration: number, onAfterSave?: () => void) => {
     if (duration < 10) {
-        toast.error('10초 미만은 저장되지 않습니다.');
-        return;
+      toast.error('10초 미만은 저장되지 않습니다.');
+      return;
     }
     if (!isLoggedIn) {
-        toast.error('로그인이 필요한 기능입니다.');
-        return;
+      toast.error('로그인이 필요한 기능입니다.');
+      return;
     }
 
     if (settings.taskPopupEnabled && !selectedTaskId) {
-        setPendingRecord({ mode: recordMode, duration, onAfterSave });
-        setTaskModalOpen(true);
+      setPendingRecord({ mode: recordMode, duration, onAfterSave });
+      setTaskModalOpen(true);
     } else {
-        await saveRecord(recordMode, duration, selectedTask);
-        if (onAfterSave) onAfterSave();
+      await saveRecord(recordMode, duration, selectedTask);
+      if (onAfterSave) onAfterSave();
     }
   }, [isLoggedIn, settings.taskPopupEnabled, selectedTaskId, selectedTask, saveRecord]);
 
@@ -232,49 +242,49 @@ export default function TimerApp({
     playAlarm();
 
     if (timerMode === 'focus') {
-        const duration = settings.pomoTime * 60;
-        const remaining = duration - focusLoggedSeconds;
-        
-        if (remaining > 0) {
-            triggerSave('pomo', remaining);
-        }
-        setFocusLoggedSeconds(0);
-        
-        const newCycle = cycleCount + 1;
-        setCycleCount(newCycle);
+      const duration = settings.pomoTime * 60;
+      const remaining = duration - focusLoggedSeconds;
 
-        if (newCycle % settings.longBreakInterval === 0) {
-            setTimerMode('longBreak');
-            setTimeLeft(settings.longBreak * 60);
-            toast('🎉 긴 휴식 시간입니다!', { icon: '☕' });
-            if (settings.autoStartBreaks) setTimeout(() => {
-                 setIsRunning(true);
-                 // Need to sync intervals/state here too?
-                 // Simple start is handled by `setIsRunning` but persistence logic needs to trigger.
-                 // This is where hook separation gets tricky. 
-                 // The hook toggleTimer handles `isRunning` state, but we need to wrap it for persistence.
-                 // We'll assume manual toggle for now or simple auto-start without persistence until next tick?
-                 // No, we need persistence.
-                 // Let's call the wrapper `handleToggleTimer()` but we can't from here easily without refs.
-            }, 1000);
-        } else {
-            setTimerMode('shortBreak');
-            setTimeLeft(settings.shortBreak * 60);
-            toast('잠시 휴식하세요.', { icon: '☕' });
-            if (settings.autoStartBreaks) setTimeout(() => {
-                 setIsRunning(true);
-            }, 1000);
-        }
-    } else {
-        setTimerMode('focus');
-        setTimeLeft(settings.pomoTime * 60);
-        setFocusLoggedSeconds(0);
-        toast('다시 집중할 시간입니다!', { icon: '🔥' });
-        if (settings.autoStartPomos) setTimeout(() => {
-             setIsRunning(true);
+      if (remaining > 0) {
+        triggerSave('pomo', remaining);
+      }
+      setFocusLoggedSeconds(0);
+
+      const newCycle = cycleCount + 1;
+      setCycleCount(newCycle);
+
+      if (newCycle % settings.longBreakInterval === 0) {
+        setTimerMode('longBreak');
+        setTimeLeft(settings.longBreak * 60);
+        toast('🎉 긴 휴식 시간입니다!', { icon: '☕' });
+        if (settings.autoStartBreaks) setTimeout(() => {
+          setIsRunning(true);
+          // Need to sync intervals/state here too?
+          // Simple start is handled by `setIsRunning` but persistence logic needs to trigger.
+          // This is where hook separation gets tricky. 
+          // The hook toggleTimer handles `isRunning` state, but we need to wrap it for persistence.
+          // We'll assume manual toggle for now or simple auto-start without persistence until next tick?
+          // No, we need persistence.
+          // Let's call the wrapper `handleToggleTimer()` but we can't from here easily without refs.
         }, 1000);
+      } else {
+        setTimerMode('shortBreak');
+        setTimeLeft(settings.shortBreak * 60);
+        toast('잠시 휴식하세요.', { icon: '☕' });
+        if (settings.autoStartBreaks) setTimeout(() => {
+          setIsRunning(true);
+        }, 1000);
+      }
+    } else {
+      setTimerMode('focus');
+      setTimeLeft(settings.pomoTime * 60);
+      setFocusLoggedSeconds(0);
+      toast('다시 집중할 시간입니다!', { icon: '🔥' });
+      if (settings.autoStartPomos) setTimeout(() => {
+        setIsRunning(true);
+      }, 1000);
     }
-    
+
     setIntervals([]);
     // currentIntervalStartRef.current = null; // Managed by hook, but we need to reset it? Hook exposes `currentIntervalStartRef`.
   }, [timerMode, settings, focusLoggedSeconds, cycleCount, triggerSave, playAlarm, setFocusLoggedSeconds, setCycleCount, setTimerMode, setTimeLeft, setIsRunning, setIntervals]);
@@ -282,12 +292,12 @@ export default function TimerApp({
   // Watch for completion via Hook's internal state or callback override
   // We passed a no-op to useTimerLogic. Now we detect edge case:
   useEffect(() => {
-      // If we could modify useTimerLogic to accept a Ref, that would be best.
-      // Or we just check `timeLeft === 0` and `wasRunning`?
-      // Since useTimerLogic sets `isRunning` to false when it hits 0...
-      // We need a stable signal.
+    // If we could modify useTimerLogic to accept a Ref, that would be best.
+    // Or we just check `timeLeft === 0` and `wasRunning`?
+    // Since useTimerLogic sets `isRunning` to false when it hits 0...
+    // We need a stable signal.
   }, []);
-  
+
   // Actually, let's redefine useTimerLogic Props to accept the full callback, 
   // and we wrap the definition in a transparent component or use UseEffect separation.
   // BUT the simplest way right now is to pass `handleTimerComplete` to `useTimerLogic` by RE-RENDERING `TimerApp` when it changes. 
@@ -296,12 +306,12 @@ export default function TimerApp({
   // It's a valid dependency chain.
   // The only issue is `useTimerLogic` is called *before* `handleTimerComplete` is defined.
   // We can't hoist `handleTimerComplete` before the hooks it uses.
-  
+
   // FIX: Use a `useEffect` in `TimerApp` to listen to an `isComplete` state from `useTimerLogic`?
   // No, `useTimerLogic` should just call a ref.
-  
+
   const timerCompleteRef = useCallback(() => {
-      handleTimerComplete();
+    handleTimerComplete();
   }, [handleTimerComplete]); // This waits for `handleTimerComplete` to be defined? No, this is circular if used in hook.
 
   // Update the ref handler whenever `handleTimerComplete` changes
@@ -315,32 +325,32 @@ export default function TimerApp({
     // ... we need to destructure again or move the hook call down? 
     // functionality of hooks must be at top level.
   } = { timerMode }; // Dummy
-  
+
   // Real usage with ref:
   // We need to alter `useTimerLogic` call above to use `timeoutHandlerRef.handler()`.
-  
-  
+
+
   // --- Wrappers for Toggle to handle persistence ---
   const handleToggleTimer = () => {
     if (isStopwatchRunning || stopwatchTime > 0) {
       toast.error('스톱워치 기록이 있습니다.\n먼저 스톱워치를 초기화하거나 저장해주세요.');
       return;
     }
-    
+
     if (isRunning) {
-        // Stopping
-        let newIntervals = intervals;
-        if (currentIntervalStartRef.current) {
-            newIntervals = [...intervals, { start: currentIntervalStartRef.current, end: Date.now() }];
-            setIntervals(newIntervals);
-            currentIntervalStartRef.current = null;
-        }
-        saveState(tab, timerMode, false, timeLeft, null, cycleCount, focusLoggedSeconds, isStopwatchRunning, stopwatchTime, null, newIntervals);
+      // Stopping
+      let newIntervals = intervals;
+      if (currentIntervalStartRef.current) {
+        newIntervals = [...intervals, { start: currentIntervalStartRef.current, end: Date.now() }];
+        setIntervals(newIntervals);
+        currentIntervalStartRef.current = null;
+      }
+      saveState(tab, timerMode, false, timeLeft, null, cycleCount, focusLoggedSeconds, isStopwatchRunning, stopwatchTime, null, newIntervals);
     } else {
-        // Starting
-        const target = Date.now() + (timeLeft * 1000);
-        currentIntervalStartRef.current = Date.now();
-        saveState(tab, timerMode, true, timeLeft, target, cycleCount, focusLoggedSeconds, isStopwatchRunning, stopwatchTime, null, intervals);
+      // Starting
+      const target = Date.now() + (timeLeft * 1000);
+      currentIntervalStartRef.current = Date.now();
+      saveState(tab, timerMode, true, timeLeft, target, cycleCount, focusLoggedSeconds, isStopwatchRunning, stopwatchTime, null, intervals);
     }
     toggleTimer();
   };
@@ -348,38 +358,38 @@ export default function TimerApp({
   const handleToggleStopwatch = () => {
     const fullTime = timerMode === 'focus' ? settings.pomoTime * 60 : timerMode === 'shortBreak' ? settings.shortBreak * 60 : settings.longBreak * 60;
     const hasTimerProgress = !isRunning && timeLeft < fullTime && timeLeft > 0;
-    
+
     if (isRunning || (timerMode === 'focus' && focusLoggedSeconds > 0) || hasTimerProgress) {
       toast.error('타이머 기록이 있습니다.\n먼저 타이머를 초기화하거나 저장해주세요.');
       return;
     }
 
     if (isStopwatchRunning) {
-        // Stopping
-        let newIntervals = intervals;
-        if (currentIntervalStartRef.current) {
-            newIntervals = [...intervals, { start: currentIntervalStartRef.current, end: Date.now() }];
-            setIntervals(newIntervals);
-            currentIntervalStartRef.current = null;
-        }
-        saveState(tab, timerMode, isRunning, timeLeft, null, cycleCount, focusLoggedSeconds, false, stopwatchTime, null, newIntervals);
+      // Stopping
+      let newIntervals = intervals;
+      if (currentIntervalStartRef.current) {
+        newIntervals = [...intervals, { start: currentIntervalStartRef.current, end: Date.now() }];
+        setIntervals(newIntervals);
+        currentIntervalStartRef.current = null;
+      }
+      saveState(tab, timerMode, isRunning, timeLeft, null, cycleCount, focusLoggedSeconds, false, stopwatchTime, null, newIntervals);
     } else {
-        // Starting
-        const start = Date.now() - (stopwatchTime * 1000);
-        currentIntervalStartRef.current = Date.now();
-        saveState(tab, timerMode, isRunning, timeLeft, null, cycleCount, focusLoggedSeconds, true, stopwatchTime, start, intervals);
+      // Starting
+      const start = Date.now() - (stopwatchTime * 1000);
+      currentIntervalStartRef.current = Date.now();
+      saveState(tab, timerMode, isRunning, timeLeft, null, cycleCount, focusLoggedSeconds, true, stopwatchTime, start, intervals);
     }
     toggleStopwatch();
   };
 
   const handleChangeTimerMode = (mode: any) => {
     if (timerMode === 'focus' && focusLoggedSeconds > 0) {
-         const fullTime = settings.pomoTime * 60;
-         const elapsed = fullTime - timeLeft;
-         const additional = elapsed - focusLoggedSeconds;
-         if (additional > 0 && timeLeft > 0) {
-             triggerSave('pomo', additional);
-         }
+      const fullTime = settings.pomoTime * 60;
+      const elapsed = fullTime - timeLeft;
+      const additional = elapsed - focusLoggedSeconds;
+      if (additional > 0 && timeLeft > 0) {
+        triggerSave('pomo', additional);
+      }
     }
 
     changeTimerMode(mode);
@@ -393,8 +403,8 @@ export default function TimerApp({
       return;
     }
     if (isRunning) {
-        toast.error("타이머가 작동 중입니다.\n먼저 정지해주세요.");
-        return;
+      toast.error("타이머가 작동 중입니다.\n먼저 정지해주세요.");
+      return;
     }
     setTimerMode("focus");
     setTimeLeft(minutes * 60);
@@ -406,62 +416,62 @@ export default function TimerApp({
   };
 
   const handleSaveTimer = () => {
-      const fullTime = timerMode === 'focus' ? settings.pomoTime * 60 : timerMode === 'shortBreak' ? settings.shortBreak * 60 : settings.longBreak * 60;
-      const elapsed = fullTime - timeLeft;
-      const additional = elapsed - focusLoggedSeconds;
+    const fullTime = timerMode === 'focus' ? settings.pomoTime * 60 : timerMode === 'shortBreak' ? settings.shortBreak * 60 : settings.longBreak * 60;
+    const elapsed = fullTime - timeLeft;
+    const additional = elapsed - focusLoggedSeconds;
 
-      if (additional > 0) {
-          const afterSave = () => {
-              resetTimerManual();
-              setIntervals([]);
-              saveState(tab, timerMode, false, fullTime, null, cycleCount, 0, isStopwatchRunning, stopwatchTime, null, []);
-          };
-          triggerSave('pomo', additional, afterSave);
-      }
-  };
-  
-  const handleSaveStopwatch = async () => {
-      setIsStopwatchRunning(false);
+    if (additional > 0) {
       const afterSave = () => {
-          setStopwatchTime(0);
-          setIntervals([]);
-          currentIntervalStartRef.current = null;
-          saveState(tab, timerMode, isRunning, timeLeft, null, cycleCount, focusLoggedSeconds, false, 0, null, []);
+        resetTimerManual();
+        setIntervals([]);
+        saveState(tab, timerMode, false, fullTime, null, cycleCount, 0, isStopwatchRunning, stopwatchTime, null, []);
       };
-      await triggerSave('stopwatch', stopwatchTime, afterSave);
+      triggerSave('pomo', additional, afterSave);
+    }
   };
 
-  const handleResetStopwatch = () => {
-      resetStopwatch();
+  const handleSaveStopwatch = async () => {
+    setIsStopwatchRunning(false);
+    const afterSave = () => {
+      setStopwatchTime(0);
       setIntervals([]);
       currentIntervalStartRef.current = null;
       saveState(tab, timerMode, isRunning, timeLeft, null, cycleCount, focusLoggedSeconds, false, 0, null, []);
+    };
+    await triggerSave('stopwatch', stopwatchTime, afterSave);
   };
-  
+
+  const handleResetStopwatch = () => {
+    resetStopwatch();
+    setIntervals([]);
+    currentIntervalStartRef.current = null;
+    saveState(tab, timerMode, isRunning, timeLeft, null, cycleCount, focusLoggedSeconds, false, 0, null, []);
+  };
+
   const handleDisableTaskPopup = async () => {
     const updated = { ...settings, taskPopupEnabled: false };
     setSettings(updated);
     await persistSettings(updated);
     toast.success('자동 팝업을 끄고 바로 저장합니다. 설정에서 다시 켤 수 있어요.');
     if (pendingRecord) {
-        await saveRecord(pendingRecord.mode, pendingRecord.duration, selectedTask);
-        if (pendingRecord.onAfterSave) pendingRecord.onAfterSave();
-        setPendingRecord(null);
-        setSelectedTask('');
+      await saveRecord(pendingRecord.mode, pendingRecord.duration, selectedTask);
+      if (pendingRecord.onAfterSave) pendingRecord.onAfterSave();
+      setPendingRecord(null);
+      setSelectedTask('');
     }
     setTaskModalOpen(false);
   };
-  
+
   const handleTaskSubmit = async () => {
-     if (!pendingRecord) return;
-     await saveRecord(pendingRecord.mode, pendingRecord.duration, selectedTask);
-     if (pendingRecord.onAfterSave) pendingRecord.onAfterSave();
-     setTaskModalOpen(false);
-     setPendingRecord(null);
-     setSelectedTask('');
-     setSelectedTaskId(null);
+    if (!pendingRecord) return;
+    await saveRecord(pendingRecord.mode, pendingRecord.duration, selectedTask);
+    if (pendingRecord.onAfterSave) pendingRecord.onAfterSave();
+    setTaskModalOpen(false);
+    setPendingRecord(null);
+    setSelectedTask('');
+    setSelectedTaskId(null);
   };
-  
+
   const handleTaskSkip = async () => {
     if (!pendingRecord) return;
     await saveRecord(pendingRecord.mode, pendingRecord.duration);
@@ -492,7 +502,7 @@ export default function TimerApp({
                 setTimeLeft(diff);
                 setIsRunning(true);
                 endTimeRef.current = state.timer.targetTime;
-                currentIntervalStartRef.current = Date.now(); 
+                currentIntervalStartRef.current = Date.now();
               } else {
                 setTimeLeft(0);
                 setIsRunning(true);
@@ -524,22 +534,22 @@ export default function TimerApp({
           }
         } catch (e) { console.error(e); }
       }
-      
-       const savedTaskState = localStorage.getItem("fomopomo_task_state");
-       if (savedTaskState) {
-         try {
-           const { taskId, taskTitle } = JSON.parse(savedTaskState);
-           if (taskId) setSelectedTaskId(taskId);
-           if (taskTitle) setSelectedTask(taskTitle);
-         } catch (e) { console.error(e); }
-       }
+
+      const savedTaskState = localStorage.getItem("fomopomo_task_state");
+      if (savedTaskState) {
+        try {
+          const { taskId, taskTitle } = JSON.parse(savedTaskState);
+          if (taskId) setSelectedTaskId(taskId);
+          if (taskTitle) setSelectedTask(taskTitle);
+        } catch (e) { console.error(e); }
+      }
     };
     restoreState();
   }, [setTimerMode, setCycleCount, setFocusLoggedSeconds, setTimeLeft, setIsRunning, endTimeRef, setIsStopwatchRunning, setStopwatchTime, stopwatchStartTimeRef, setIntervals, setSelectedTaskId, setSelectedTask]);
 
   // Persist Task
   useEffect(() => {
-     localStorage.setItem("fomopomo_task_state", JSON.stringify({ taskId: selectedTaskId, taskTitle: selectedTask }));
+    localStorage.setItem("fomopomo_task_state", JSON.stringify({ taskId: selectedTaskId, taskTitle: selectedTask }));
   }, [selectedTaskId, selectedTask]);
 
   // Keyboard
@@ -558,6 +568,28 @@ export default function TimerApp({
     return () => window.removeEventListener('keydown', handleSpaceToggle);
   }, [tab, taskModalOpen, isRunning, isStopwatchRunning, timeLeft, stopwatchTime, intervals]);
 
+  // Update Document Title
+  useEffect(() => {
+    let modeString = 'fomopomo';
+    let timeString = '';
+
+    if (tab === 'timer') {
+      timeString = formatTimeForTitle(timeLeft);
+      if (timerMode === 'focus') modeString = '집중';
+      else if (timerMode === 'shortBreak') modeString = '짧은 휴식';
+      else if (timerMode === 'longBreak') modeString = '긴 휴식';
+    } else {
+      timeString = formatTimeForTitle(stopwatchTime);
+      modeString = '스톱워치';
+    }
+
+    document.title = `(${timeString} | ${modeString})`;
+
+    return () => {
+      document.title = 'fomopomo';
+    };
+  }, [tab, timerMode, timeLeft, stopwatchTime]);
+
 
   return (
     <>
@@ -572,45 +604,43 @@ export default function TimerApp({
         onSkip={handleTaskSkip}
         onDisablePopup={handleDisableTaskPopup}
       />
-      
+
       <div className="relative w-full max-w-md mx-auto">
         <ThemeBackground tab={tab} timerMode={timerMode} isRunning={isRunning} isStopwatchRunning={isStopwatchRunning} />
-        <div className={`relative w-full bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden transition-all duration-300 transform ${
-          (isRunning || isStopwatchRunning) ? 'shadow-2xl scale-[1.02] ring-2 ring-offset-2 dark:ring-offset-slate-900' : ''
-        } ${
-          (isRunning || isStopwatchRunning) ? (
+        <div className={`relative w-full bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden transition-all duration-300 transform ${(isRunning || isStopwatchRunning) ? 'shadow-2xl scale-[1.02] ring-2 ring-offset-2 dark:ring-offset-slate-900' : ''
+          } ${(isRunning || isStopwatchRunning) ? (
             tab === 'stopwatch' ? 'ring-indigo-200 dark:ring-indigo-900' :
-            timerMode === 'focus' ? 'ring-rose-200 dark:ring-rose-900' :
-            'ring-emerald-200 dark:ring-emerald-900'
+              timerMode === 'focus' ? 'ring-rose-200 dark:ring-rose-900' :
+                'ring-emerald-200 dark:ring-emerald-900'
           ) : ''
-        }`}>
-          
+          }`}>
+
           <div className="flex items-center gap-2 m-2">
             <div className="flex-1 flex p-1 bg-gray-100 dark:bg-slate-900/50 rounded-2xl">
               <button onClick={() => setTab('timer')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tab === 'timer' ? 'bg-white dark:bg-slate-800 text-gray-700 dark:text-white shadow-sm' : 'text-gray-400 dark:text-gray-500'}`}>타이머</button>
               <button onClick={() => setTab('stopwatch')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tab === 'stopwatch' ? 'bg-white dark:bg-slate-800 text-gray-700 dark:text-white shadow-sm' : 'text-gray-400 dark:text-gray-500'}`}>스톱워치</button>
             </div>
             <button onClick={() => setIsTaskSidebarOpen(true)} className={`p-4 rounded-2xl transition-all shadow-sm border active:scale-95 ${selectedTaskId ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-500 dark:text-rose-400 border-rose-100 dark:border-rose-900/50' : 'bg-white dark:bg-slate-800 text-gray-400 dark:text-gray-500 border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700'}`}>
-               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 17.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 17.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
             </button>
           </div>
 
           <TaskSidebar isOpen={isTaskSidebarOpen} onClose={() => setIsTaskSidebarOpen(false)} tasks={dbTasks} weeklyPlans={weeklyPlans} monthlyPlans={monthlyPlans} selectedTaskId={selectedTaskId} onSelectTask={(task) => { if (task) { setSelectedTask(task.title); setSelectedTaskId(task.id); } else { setSelectedTask(''); setSelectedTaskId(null); } }} />
 
           <div className={`px-6 py-8 sm:px-10 sm:py-10 flex flex-col items-center justify-center min-h-[360px] transition-colors duration-500 ${tab === 'stopwatch' ? 'bg-indigo-50 dark:bg-indigo-950/30' : (timerMode === 'focus' ? 'bg-rose-50 dark:bg-rose-950/30' : 'bg-emerald-50 dark:bg-emerald-950/30')}`}>
-             {tab === 'timer' ? (
-                <TimerDisplay 
-                    timerMode={timerMode} timeLeft={timeLeft} isRunning={isRunning} isSaving={isSaving} cycleCount={cycleCount} longBreakInterval={settings.longBreakInterval} presets={settings.presets}
-                    showSaveButton={timerMode === 'focus' && !isRunning && (timerMode === 'focus' ? (settings.pomoTime * 60) : (timerMode === 'shortBreak' ? settings.shortBreak * 60 : settings.longBreak * 60)) - timeLeft - focusLoggedSeconds > 0}
-                    showResetButton={!isRunning && timeLeft !== (timerMode === 'focus' ? (settings.pomoTime * 60) : (timerMode === 'shortBreak' ? settings.shortBreak * 60 : settings.longBreak * 60))}
-                    onToggleTimer={handleToggleTimer}
-                    onResetTimer={() => { resetTimerManual(); setIntervals([]); saveState(tab, timerMode, false, timerMode === 'focus' ? settings.pomoTime * 60 : (timerMode === 'shortBreak' ? settings.shortBreak * 60 : settings.longBreak * 60), null, cycleCount, timerMode === 'focus' ? 0 : focusLoggedSeconds, isStopwatchRunning, stopwatchTime, null, []); }}
-                    onSaveTimer={handleSaveTimer} onChangeMode={handleChangeTimerMode} onPresetClick={handlePresetClick}
-                    selectedTaskId={selectedTaskId} selectedTaskTitle={getSelectedTaskTitle() || selectedTask} onOpenTaskSidebar={() => setIsTaskSidebarOpen(true)} onClearTask={(e) => { e.stopPropagation(); setSelectedTaskId(null); setSelectedTask(''); }}
-                />
-             ) : (
-                <StopwatchDisplay stopwatchTime={stopwatchTime} isStopwatchRunning={isStopwatchRunning} isSaving={isSaving} onToggleStopwatch={handleToggleStopwatch} onSaveStopwatch={handleSaveStopwatch} onResetStopwatch={handleResetStopwatch} selectedTaskId={selectedTaskId} selectedTaskTitle={getSelectedTaskTitle() || selectedTask} onOpenTaskSidebar={() => setIsTaskSidebarOpen(true)} onClearTask={(e) => { e.stopPropagation(); setSelectedTaskId(null); setSelectedTask(''); }} />
-             )}
+            {tab === 'timer' ? (
+              <TimerDisplay
+                timerMode={timerMode} timeLeft={timeLeft} isRunning={isRunning} isSaving={isSaving} cycleCount={cycleCount} longBreakInterval={settings.longBreakInterval} presets={settings.presets}
+                showSaveButton={timerMode === 'focus' && !isRunning && (timerMode === 'focus' ? (settings.pomoTime * 60) : (timerMode === 'shortBreak' ? settings.shortBreak * 60 : settings.longBreak * 60)) - timeLeft - focusLoggedSeconds > 0}
+                showResetButton={!isRunning && timeLeft !== (timerMode === 'focus' ? (settings.pomoTime * 60) : (timerMode === 'shortBreak' ? settings.shortBreak * 60 : settings.longBreak * 60))}
+                onToggleTimer={handleToggleTimer}
+                onResetTimer={() => { resetTimerManual(); setIntervals([]); saveState(tab, timerMode, false, timerMode === 'focus' ? settings.pomoTime * 60 : (timerMode === 'shortBreak' ? settings.shortBreak * 60 : settings.longBreak * 60), null, cycleCount, timerMode === 'focus' ? 0 : focusLoggedSeconds, isStopwatchRunning, stopwatchTime, null, []); }}
+                onSaveTimer={handleSaveTimer} onChangeMode={handleChangeTimerMode} onPresetClick={handlePresetClick}
+                selectedTaskId={selectedTaskId} selectedTaskTitle={getSelectedTaskTitle() || selectedTask} onOpenTaskSidebar={() => setIsTaskSidebarOpen(true)} onClearTask={(e) => { e.stopPropagation(); setSelectedTaskId(null); setSelectedTask(''); }}
+              />
+            ) : (
+              <StopwatchDisplay stopwatchTime={stopwatchTime} isStopwatchRunning={isStopwatchRunning} isSaving={isSaving} onToggleStopwatch={handleToggleStopwatch} onSaveStopwatch={handleSaveStopwatch} onResetStopwatch={handleResetStopwatch} selectedTaskId={selectedTaskId} selectedTaskTitle={getSelectedTaskTitle() || selectedTask} onOpenTaskSidebar={() => setIsTaskSidebarOpen(true)} onClearTask={(e) => { e.stopPropagation(); setSelectedTaskId(null); setSelectedTask(''); }} />
+            )}
           </div>
         </div>
       </div>
