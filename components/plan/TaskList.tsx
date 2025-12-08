@@ -422,29 +422,31 @@ export default function TaskList({ selectedDate, userId }: TaskListProps) {
 
       <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
         {isAdding ? (
-          <form onSubmit={addTask} className="flex gap-3">
+          <form onSubmit={addTask} className="flex flex-col gap-3">
             <input
               type="text"
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
               placeholder="할 일을 입력하세요"
-              className="flex-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 dark:text-white"
+              className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 dark:text-white"
               autoFocus
             />
-            <button
-              type="submit"
-              disabled={!newTaskTitle.trim()}
-              className="px-6 py-3 bg-rose-500 text-white font-bold rounded-xl hover:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              추가
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsAdding(false)}
-              className="px-4 py-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
-            >
-              취소
-            </button>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsAdding(false)}
+                className="px-4 py-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
+              >
+                취소
+              </button>
+              <button
+                type="submit"
+                disabled={!newTaskTitle.trim()}
+                className="px-6 py-2 bg-rose-500 text-white font-bold rounded-xl hover:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                추가
+              </button>
+            </div>
           </form>
         ) : (
           <button
