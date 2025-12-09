@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 
 interface UseStopwatchLogicProps {
   playClickSound: () => void;
-  updateStatus: (status: 'studying' | 'paused', task?: string, startTime?: string) => void;
+  updateStatus: (status: 'studying' | 'paused', task?: string, startTime?: string, elapsedTime?: number) => void;
 }
 
 export const useStopwatchLogic = ({
@@ -42,7 +42,7 @@ export const useStopwatchLogic = ({
     if (isStopwatchRunning) {
       // Pause
       setIsStopwatchRunning(false);
-      updateStatus('paused');
+      updateStatus('paused', undefined, undefined, stopwatchTime);
     } else {
       // Start
       // Recalculate start time based on current accumulated time

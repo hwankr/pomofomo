@@ -61,8 +61,7 @@ export const useStudySession = ({
   // Ref-based lock to prevent duplicate saves (sync check, unlike useState)
   const isSavingRef = useRef(false);
 
-  // Update status (online/offline/studying)
-  const updateStatus = useCallback(async (status: 'studying' | 'paused' | 'online' | 'offline', task?: string, startTime?: string) => {
+  const updateStatus = useCallback(async (status: 'studying' | 'paused' | 'online' | 'offline', task?: string, startTime?: string, elapsedTime?: number) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -73,12 +72,18 @@ export const useStudySession = ({
       const { data } = await supabase.from('profiles').select('is_task_public').eq('id', user.id).single();
       const isPublic = data?.is_task_public ?? true;
 
-      await supabase.from('profiles').update({
+      const updateData: any = {
         status,
         current_task: isPublic ? taskTitle : null,
         last_active_at: new Date().toISOString(),
         study_start_time: startTime || null,
-      }).eq('id', user.id);
+      };
+
+      if (elapsedTime !== undefined) {
+        updateData.total_stopwatch_time = elapsedTime;
+      }
+
+      await supabase.from('profiles').update(updateData).eq('id', user.id);
     } catch (e) {
       console.error('Failed to update status', e);
     }
@@ -255,7 +260,7 @@ export const useStudySession = ({
 
         const { data } = await supabase
           .from('profiles')
-          .select('status, study_start_time')
+          .select('status, study_start_time, total_stopwatch_time')
           .eq('id', user.id)
           .single();
         

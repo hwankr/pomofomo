@@ -126,7 +126,7 @@ export default function TimerApp({
     stopwatchStartTimeRef,
   } = useStopwatchLogic({
     playClickSound,
-    updateStatus: (status, task) => updateStatus(status, task),
+    updateStatus: (status, task, startTime, elapsed) => updateStatus(status, task, startTime, elapsed),
   });
 
   // Fix cyclic dependency for onTimerComplete
@@ -615,25 +615,26 @@ export default function TimerApp({
 
           if (elapsed >= 0) {
             // Found active session on server!
-            // Only override if we are NOT currently running something locally (or if local is 0)
-            // But user request implies they want to see the active session.
-            // Let's assume server truth > local idle.
-            
-            // If local is running, we might have a conflict. For now, let's prioritize server if local is NOT running.
-            // Or if local value is significantly different? 
-            // Simple rule: If local is paused/stopped, sync.
-            
             setTab('stopwatch');
             setStopwatchTime(elapsed);
             setIsStopwatchRunning(true);
             stopwatchStartTimeRef.current = startTime;
             currentIntervalStartRef.current = now; // Start tracking new interval from sync moment
             
-            // Clear any stale intervals
             setIntervals([]);
-            
             toast.success('다른 기기에서 진행 중인 스톱워치를 불러왔습니다.', { icon: '🔄' });
           }
+        } else if (data?.total_stopwatch_time && data.total_stopwatch_time > 0) {
+          // Found paused session on server
+          // Only restore if we don't have a local active session (which we shouldn't on fresh load if we prioritize server)
+          // But check if local storage has something newer? 
+          // For now, assume server 'paused' state with time > 0 is worth restoring.
+          
+          setTab('stopwatch');
+          setStopwatchTime(data.total_stopwatch_time);
+          setIsStopwatchRunning(false);
+          setIntervals([]);
+          toast('이전 스톱워치 기록을 불러왔습니다.', { icon: 'uq' });
         }
       } catch (e) {
         console.error('Sync failed', e);
