@@ -253,7 +253,7 @@ export const useStudySession = ({
     currentIntervalStartRef,
     updateStatus,
     saveRecord,
-    checkActiveSession: async () => {
+    checkActiveSession: useCallback(async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return null;
@@ -269,6 +269,6 @@ export const useStudySession = ({
         console.error('Failed to check active session', e);
         return null;
       }
-    },
+    }, []),
   };
 };
