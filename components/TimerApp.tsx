@@ -634,7 +634,6 @@ export default function TimerApp({
           setStopwatchTime(data.total_stopwatch_time);
           setIsStopwatchRunning(false);
           setIntervals([]);
-          toast('이전 스톱워치 기록을 불러왔습니다.', { icon: 'uq' });
         }
       } catch (e) {
         console.error('Sync failed', e);
