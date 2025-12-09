@@ -91,7 +91,7 @@ export default function MemberReportModal({ isOpen, onClose, userId, userName }:
             >
                 <div className="flex justify-between items-center p-4 border-b border-gray-100 dark:border-slate-700">
                     <h2 className="text-lg font-bold text-gray-800 dark:text-white">
-                        {userName}'s Report
+                        {userName}님의 리포트
                     </h2>
                     <button
                         onClick={onClose}
@@ -109,14 +109,14 @@ export default function MemberReportModal({ isOpen, onClose, userId, userName }:
                     ) : (
                         <div className="space-y-6">
                             <div className="text-center">
-                                <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Today's Focus Time</div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">오늘 집중 시간</div>
                                 <div className="text-4xl font-mono font-bold text-rose-500 dark:text-rose-400">
                                     {formatDuration(totalFocusTime)}
                                 </div>
                             </div>
 
                             <div className="space-y-3">
-                                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Task Breakdown</h3>
+                                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">태스크별 상세</h3>
                                 {tasks.length > 0 ? (
                                     <div className="space-y-2">
                                         {tasks.map((task) => (
@@ -128,7 +128,7 @@ export default function MemberReportModal({ isOpen, onClose, userId, userName }:
                                     </div>
                                 ) : (
                                     <div className="text-center text-gray-400 text-sm py-4 bg-gray-50 dark:bg-slate-700/30 rounded-lg border border-dashed border-gray-200 dark:border-slate-700">
-                                        No tasks recorded today
+                                        오늘 기록된 태스크가 없습니다
                                     </div>
                                 )}
                             </div>
