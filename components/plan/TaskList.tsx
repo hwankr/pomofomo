@@ -232,7 +232,7 @@ export default function TaskList({ selectedDate, userId }: TaskListProps) {
   useEffect(() => {
     fetchTasks();
 
-    const channel = supabase
+    const taskChannel = supabase
       .channel('task-list-updates')
       .on(
         'postgres_changes',
@@ -243,15 +243,30 @@ export default function TaskList({ selectedDate, userId }: TaskListProps) {
           filter: `user_id=eq.${userId}`,
         },
         () => {
-          // We might want to be careful here not to overwrite optimistic updates while dragging
-          // For now, simple re-fetch is okay but might be jittery if multiple users edit (unlikely here)
+          fetchTasks();
+        }
+      )
+      .subscribe();
+
+    const sessionChannel = supabase
+      .channel('task-list-session-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'study_sessions',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
           fetchTasks();
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(taskChannel);
+      supabase.removeChannel(sessionChannel);
     };
   }, [fetchTasks, userId]);
 

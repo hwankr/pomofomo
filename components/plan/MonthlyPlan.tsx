@@ -9,17 +9,26 @@ import { cn } from '@/lib/utils';
 import { usePersistedState } from '@/hooks/usePersistedState';
 import ConfirmModal from '@/components/ConfirmModal';
 
-interface MonthlyPlan {
+  interface MonthlyPlan {
   id: string;
   title: string;
   status: 'todo' | 'in_progress' | 'done';
   month: number;
   year: number;
+  duration?: number;
 }
 
 interface MonthlyPlanProps {
   userId: string;
 }
+
+const formatDuration = (seconds: number) => {
+  if (!seconds) return null;
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+};
 
 export default function MonthlyPlan({ userId }: MonthlyPlanProps) {
   const [plans, setPlans] = useState<MonthlyPlan[]>([]);
@@ -56,14 +65,64 @@ export default function MonthlyPlan({ userId }: MonthlyPlanProps) {
     if (error) {
       console.error('Error fetching monthly plans:', error);
     } else {
-      setPlans(data || []);
+      const planIds = (data || []).map((p: any) => p.id);
+
+      const { data: sessions } = await supabase
+        .from('study_sessions')
+        .select('task_id, duration')
+        .in('task_id', planIds);
+
+      const plansWithDuration = (data || []).map((plan: any) => {
+        const planSessions = sessions?.filter((s: any) => s.task_id === plan.id) || [];
+        const totalDuration = planSessions.reduce((acc: number, curr: any) => acc + curr.duration, 0);
+        return { ...plan, duration: totalDuration };
+      });
+
+      setPlans(plansWithDuration);
     }
     setLoading(false);
   }, [userId, currentMonth, currentYear]);
 
   useEffect(() => {
     fetchPlans();
-  }, [fetchPlans]);
+
+    const planChannel = supabase
+      .channel('monthly-plan-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all events to catch updates too
+          schema: 'public',
+          table: 'monthly_plans',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          fetchPlans();
+        }
+      )
+      .subscribe();
+
+    const sessionChannel = supabase
+      .channel('monthly-plan-session-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'study_sessions',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          fetchPlans();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(planChannel);
+      supabase.removeChannel(sessionChannel);
+    };
+  }, [fetchPlans, userId]);
 
   const addPlan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,7 +147,7 @@ export default function MonthlyPlan({ userId }: MonthlyPlanProps) {
     if (error) {
       console.error('Error adding plan:', error);
     } else if (data) {
-      setPlans([...plans, data]);
+      setPlans([...plans, { ...data, duration: 0 }]);
       setNewPlanTitle('');
       setIsAdding(false);
     }
@@ -264,6 +323,12 @@ export default function MonthlyPlan({ userId }: MonthlyPlanProps) {
                     {plan.title}
                   </span>
                 )}
+
+                {plan.duration ? (
+                  <span className="text-xs font-bold text-purple-500 bg-purple-50 dark:bg-purple-900/30 px-2 py-1 rounded-md whitespace-nowrap">
+                    {formatDuration(plan.duration)}
+                  </span>
+                ) : null}
 
                 {editingPlanId !== plan.id && (
                   <button

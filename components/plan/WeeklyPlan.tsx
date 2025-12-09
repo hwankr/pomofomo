@@ -9,17 +9,26 @@ import { cn } from '@/lib/utils';
 import { usePersistedState } from '@/hooks/usePersistedState';
 import ConfirmModal from '@/components/ConfirmModal';
 
-interface WeeklyPlan {
+  interface WeeklyPlan {
   id: string;
   title: string;
   status: 'todo' | 'in_progress' | 'done';
   start_date: string;
   end_date: string;
+  duration?: number;
 }
 
 interface WeeklyPlanProps {
   userId: string;
 }
+
+const formatDuration = (seconds: number) => {
+  if (!seconds) return null;
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+};
 
 export default function WeeklyPlan({ userId }: WeeklyPlanProps) {
   const [plans, setPlans] = useState<WeeklyPlan[]>([]);
@@ -58,14 +67,64 @@ export default function WeeklyPlan({ userId }: WeeklyPlanProps) {
     if (error) {
       console.error('Error fetching weekly plans:', error);
     } else {
-      setPlans(data || []);
+      const planIds = (data || []).map((p: any) => p.id);
+
+      const { data: sessions } = await supabase
+        .from('study_sessions')
+        .select('task_id, duration')
+        .in('task_id', planIds);
+
+      const plansWithDuration = (data || []).map((plan: any) => {
+        const planSessions = sessions?.filter((s: any) => s.task_id === plan.id) || [];
+        const totalDuration = planSessions.reduce((acc: number, curr: any) => acc + curr.duration, 0);
+        return { ...plan, duration: totalDuration };
+      });
+
+      setPlans(plansWithDuration);
     }
     setLoading(false);
   }, [userId]);
 
   useEffect(() => {
     fetchPlans();
-  }, [fetchPlans]);
+
+    const planChannel = supabase
+      .channel('weekly-plan-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all events to catch updates too
+          schema: 'public',
+          table: 'weekly_plans',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          fetchPlans();
+        }
+      )
+      .subscribe();
+
+    const sessionChannel = supabase
+      .channel('weekly-plan-session-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'study_sessions',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          fetchPlans();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(planChannel);
+      supabase.removeChannel(sessionChannel);
+    };
+  }, [fetchPlans, userId]);
 
   const addPlan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,7 +149,7 @@ export default function WeeklyPlan({ userId }: WeeklyPlanProps) {
     if (error) {
       console.error('Error adding plan:', error);
     } else if (data) {
-      setPlans([...plans, data]);
+      setPlans([...plans, { ...data, duration: 0 }]);
       setNewPlanTitle('');
       setIsAdding(false);
     }
@@ -266,6 +325,12 @@ export default function WeeklyPlan({ userId }: WeeklyPlanProps) {
                     {plan.title}
                   </span>
                 )}
+
+                {plan.duration ? (
+                  <span className="text-xs font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded-md whitespace-nowrap">
+                    {formatDuration(plan.duration)}
+                  </span>
+                ) : null}
 
                 {editingPlanId !== plan.id && (
                   <button
