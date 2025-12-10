@@ -12,6 +12,7 @@ import { useTheme } from '@/components/ThemeProvider';
 import FeedbackItem, { Feedback } from '@/components/feedback/FeedbackItem';
 import ChangelogList from '@/components/feedback/ChangelogList';
 import FeedbackDetail from '@/components/feedback/FeedbackDetail';
+import { useUnreadChangelogCount } from '@/hooks/useUnreadChangelogCount';
 
 interface Reply {
     id: string;
@@ -56,6 +57,7 @@ export default function FeedbackPage() {
 
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
+    const { markAsRead: markChangelogAsRead } = useUnreadChangelogCount();
 
     const scrollToBottom = () => {
         if (chatContainerRef.current) {
@@ -88,6 +90,13 @@ export default function FeedbackPage() {
         };
         init();
     }, [activeTab]); // Refetch when tab changes
+
+    // Mark changelog as read when viewing changelog tab
+    useEffect(() => {
+        if (activeTab === 'changelog') {
+            markChangelogAsRead();
+        }
+    }, [activeTab, markChangelogAsRead]);
 
     // Real-time subscription for replies
     useEffect(() => {

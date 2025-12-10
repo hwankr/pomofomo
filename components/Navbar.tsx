@@ -9,6 +9,7 @@ import appIcon from '@/app/icon.png';
 import { usePathname } from 'next/navigation';
 import { useFriendRequestCount } from '@/hooks/useFriendRequestCount';
 import { usePendingFeedbackCount } from '@/hooks/usePendingFeedbackCount';
+import { useUnreadChangelogCount } from '@/hooks/useUnreadChangelogCount';
 
 interface NavbarProps {
     session: Session | null;
@@ -35,6 +36,7 @@ export default function Navbar({
     const pathname = usePathname();
     const friendRequestCount = useFriendRequestCount(session);
     const pendingFeedbackCount = usePendingFeedbackCount(session);
+    const { hasUnread: hasUnreadChangelog } = useUnreadChangelogCount();
 
     // Scroll effect for glassmorphism intensity
     useEffect(() => {
@@ -105,6 +107,12 @@ export default function Navbar({
                                                 <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
                                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                                                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                                                </span>
+                                            )}
+                                            {link.href === '/feedback' && pendingFeedbackCount === 0 && hasUnreadChangelog && (
+                                                <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                                                 </span>
                                             )}
                                         </Link>
@@ -250,6 +258,11 @@ export default function Navbar({
                                                 {link.href === '/feedback' && pendingFeedbackCount > 0 && (
                                                     <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                                                         {pendingFeedbackCount}
+                                                    </span>
+                                                )}
+                                                {link.href === '/feedback' && pendingFeedbackCount === 0 && hasUnreadChangelog && (
+                                                    <span className="bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                                                        N
                                                     </span>
                                                 )}
                                             </div>
