@@ -80,9 +80,11 @@ export default function FriendList({ session, refreshTrigger }: FriendListProps)
           table: 'profiles',
         },
         (payload) => {
+          console.log('[Friend Realtime] profiles UPDATE received:', payload.new);
           setFriends((prev) =>
             prev.map((f) => {
               if (f.friend_id === payload.new.id) {
+                console.log('[Friend Realtime] Updating friend:', f.friend_id);
                 return {
                   ...f,
                   friend: {
@@ -100,7 +102,9 @@ export default function FriendList({ session, refreshTrigger }: FriendListProps)
           );
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[Friend Realtime] Subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
