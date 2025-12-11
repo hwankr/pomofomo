@@ -64,10 +64,10 @@ Deno.serve(async (req) => {
 
         const userId = record.id; // profiles.id is the user_id
 
-        // 1. Find friends (Source of Truth: friendships table)
+        // 1. Find friends with notification enabled (Source of Truth: friendships table)
         const { data: friends, error: friendsError } = await supabase
             .from('friendships')
-            .select('friend_id')
+            .select('friend_id, is_notification_enabled')
             .eq('user_id', userId);
 
         if (friendsError) {
@@ -80,8 +80,16 @@ Deno.serve(async (req) => {
             return new Response('No friends found', { status: 200 });
         }
 
-        const friendIds = friends.map((f) => f.friend_id);
-        await supabase.from('debug_logs').insert({ message: 'Found friends', details: { friendIds } });
+        // Filter friends who have notifications enabled (default to true if null)
+        const notificationEnabledFriends = friends.filter((f) => f.is_notification_enabled !== false);
+
+        if (notificationEnabledFriends.length === 0) {
+            await supabase.from('debug_logs').insert({ message: 'No friends with notifications enabled', details: { userId } });
+            return new Response('No friends with notifications enabled', { status: 200 });
+        }
+
+        const friendIds = notificationEnabledFriends.map((f) => f.friend_id);
+        await supabase.from('debug_logs').insert({ message: 'Found friends with notifications enabled', details: { friendIds } });
 
         // 2. Get Push Subscriptions for friends
         const { data: subscriptions, error: subsError } = await supabase
