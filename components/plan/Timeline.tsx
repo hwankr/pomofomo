@@ -77,6 +77,11 @@ export default function Timeline({ selectedDate, userId }: TimelineProps) {
           const endTime = new Date(session.created_at);
           const startTime = subSeconds(endTime, session.duration);
 
+          // Exclude break sessions from timeline
+          if (session.mode === 'shortBreak' || session.mode === 'longBreak') {
+            return null;
+          }
+
           // Check if session overlaps with the selected day
           if (endTime < dayStart || startTime > dayEnd) {
             return null;
@@ -180,7 +185,9 @@ export default function Timeline({ selectedDate, userId }: TimelineProps) {
             const widthPercent = (durationMinutes / 1440) * 100;
 
             const isFocus = session.mode === 'focus' || session.mode === 'pomo';
-            const colorClass = isFocus ? 'bg-rose-500' : 'bg-emerald-500';
+            const isBreak = session.mode === 'shortBreak' || session.mode === 'longBreak';
+            // Pomo: rose, Break: emerald, Stopwatch: sky
+            const colorClass = isFocus ? 'bg-rose-500' : isBreak ? 'bg-emerald-500' : 'bg-sky-500';
 
             return (
               <div
@@ -215,10 +222,11 @@ export default function Timeline({ selectedDate, userId }: TimelineProps) {
           const isFocus = session.mode === 'focus' || session.mode === 'pomo';
           const isBreak = session.mode === 'shortBreak' || session.mode === 'longBreak';
 
-          let dotColor = 'bg-gray-300';
-          let cardBg = 'bg-gray-50 dark:bg-gray-700/50';
-          let textColor = 'text-gray-700 dark:text-gray-300';
-          let borderColor = 'border-gray-200 dark:border-gray-600';
+          // Default: Stopwatch sessions (sky blue)
+          let dotColor = 'bg-sky-500';
+          let cardBg = 'bg-sky-50 dark:bg-sky-900/20';
+          let textColor = 'text-sky-900 dark:text-sky-100';
+          let borderColor = 'border-sky-100 dark:border-sky-800/50';
 
           if (isFocus) {
             dotColor = 'bg-rose-500';
