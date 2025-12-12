@@ -54,6 +54,22 @@ export const useTasks = (isLoggedIn: boolean) => {
     }
   }, [isLoggedIn]);
 
+  // Restore task state from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedTaskState = localStorage.getItem('fomopomo_task_state');
+      if (savedTaskState) {
+        const { taskId, taskTitle } = JSON.parse(savedTaskState);
+        if (taskId) {
+          setSelectedTaskId(taskId);
+          setSelectedTask(taskTitle || '');
+        }
+      }
+    } catch (error) {
+      console.error('Error restoring task state:', error);
+    }
+  }, []);
+
   // Initial fetch and focus/mount listeners
   useEffect(() => {
     fetchDbTasks();
