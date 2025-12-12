@@ -169,7 +169,7 @@ export const useStudySession = ({
             created_at: new Date(interval.end).toISOString(),
             group_id: groupId,
           }))
-          .filter(row => row.duration > 0 && row.duration < 24 * 60 * 60);
+          .filter(row => row.duration >= 10 && row.duration < 24 * 60 * 60);
 
         if (rowsToInsert.length === 0) {
           rowsToInsert.push({
@@ -265,7 +265,7 @@ export const useStudySession = ({
           .select('status, study_start_time, total_stopwatch_time, timer_type, timer_mode, timer_duration')
           .eq('id', user.id)
           .single();
-        
+
         return data;
       } catch (e) {
         console.error('Failed to check active session', e);
