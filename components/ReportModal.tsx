@@ -505,10 +505,11 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
                   <XAxis
                     dataKey="displayLabel"
                     stroke="#9ca3af"
-                    fontSize={11}
+                    fontSize={viewMode === 'month' ? 9 : 11}
                     tickLine={false}
                     axisLine={false}
                     dy={10}
+                    interval={0}
                   />
                   <YAxis
                     stroke="#9ca3af"
