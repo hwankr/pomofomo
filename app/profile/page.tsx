@@ -2,37 +2,85 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { User } from '@supabase/supabase-js';
+// import { User } from '@supabase/supabase-js'; // Removed unused
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import ContributionGraph from '@/components/profile/ContributionGraph';
 import StudyReport from '@/components/StudyReport';
 import { useStudyStats } from '@/hooks/useStudyStats';
+import Navbar from '@/components/Navbar';
+import LoginModal from '@/components/LoginModal';
+import SettingsModal from '@/components/SettingsModal';
+import { useTheme } from '@/components/ThemeProvider';
+import { useAuthSession } from '@/hooks/useAuthSession';
+import { toast } from 'react-hot-toast';
+import { isInAppBrowser, handleInAppBrowser } from '@/lib/userAgent';
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<User | null>(null);
-  const { fetchStats, heatmapData, totalFocusTime, loading } = useStudyStats();
+  const { session, loading: sessionLoading } = useAuthSession();
+  const { fetchStats, heatmapData, totalFocusTime, loading: statsLoading } = useStudyStats();
+  const { isDarkMode, toggleDarkMode } = useTheme();
+
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [settingsUpdateTrigger, setSettingsUpdateTrigger] = useState(0); // For compatibility if needed, or just refresh
 
   useEffect(() => {
-    const getUserAndStats = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
-      if (data.user) {
+    if (session?.user) {
         // Fetch stats to populate heatmap and total time
-        // We use 'year' mode to ensure we get a broad range if needed,
-        // though the hook fetches allSessions regardless.
         fetchStats('year', new Date());
+    }
+  }, [session, fetchStats]);
+
+  const handleGoogleLogin = async () => {
+    if (isInAppBrowser()) {
+      const handled = handleInAppBrowser();
+      if (handled) {
+        toast.error(
+          '구글 로그인은 보안 정책상\n외부 브라우저(크롬, 사파리 등)에서\n진행해야 합니다.',
+          {
+            duration: 5000,
+          }
+        );
+        return;
       }
-    };
-    getUserAndStats();
-  }, [fetchStats]);
+    }
+
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+  };
+
+  if (sessionLoading) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 pb-20">
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8 animate-fade-in">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 pb-20 transition-colors duration-300">
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onGoogleLogin={handleGoogleLogin}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        onSave={() => setSettingsUpdateTrigger((prev) => prev + 1)}
+      />
+
+      <Navbar
+        session={session}
+        isDarkMode={isDarkMode}
+        toggleDarkMode={toggleDarkMode}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
+        onOpenLogin={() => setIsLoginModalOpen(true)}
+        onLogout={() => supabase.auth.signOut()}
+      />
+
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8 animate-fade-in mt-16">
         
         {/* Header Section */}
         <section>
-          <ProfileHeader user={user} totalFocusTime={totalFocusTime} />
+          <ProfileHeader user={session?.user || null} totalFocusTime={totalFocusTime} />
         </section>
 
         {/* Contribution Graph Section */}
@@ -43,7 +91,7 @@ export default function ProfilePage() {
                 최근 365일
             </span>
           </h2>
-          {loading && heatmapData.length === 0 ? (
+          {statsLoading && heatmapData.length === 0 ? (
                <div className="h-32 flex items-center justify-center text-gray-400 text-sm">잔디 심는 중...</div>
           ) : (
                <ContributionGraph data={heatmapData} />
