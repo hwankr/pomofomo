@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useEffect, useState } from 'react';
 import {
   BarChart,
   Bar,
@@ -18,7 +17,6 @@ import {
   endOfMonth,
   startOfYear,
   endOfYear,
-  endOfDay,
   addDays,
   format,
   subMonths,
@@ -28,34 +26,24 @@ import {
   isSameWeek,
 } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { getDayStart, getDayEnd } from '@/lib/dateUtils';
+import { useStudyStats, ChartData, ViewMode } from '@/hooks/useStudyStats';
 
-interface ReportModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-type ChartData = {
-  name: string;
-  hours: number;
-  seconds: number;
-  taskTotals: Record<string, number>;
-  bucketKey: string;
-  displayLabel: string;
-  breakdownLabel: string;
-};
-
-export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
-  const [chartData, setChartData] = useState<ChartData[]>([]);
-  const [totalFocusTime, setTotalFocusTime] = useState(0);
-  const [todayFocusTime, setTodayFocusTime] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [selectedBucket, setSelectedBucket] = useState<ChartData | null>(null);
-  const [viewMode, setViewMode] = useState<'week' | 'month' | 'year'>('week');
+export default function StudyReport() {
+  const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [activeYear, setActiveYear] = useState(new Date().getFullYear());
   const [activeMonth, setActiveMonth] = useState(new Date());
   const [activeWeekStart, setActiveWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
-  const [earliestYear, setEarliestYear] = useState<number | null>(null);
+  const [selectedBucket, setSelectedBucket] = useState<ChartData | null>(null);
+
+  const {
+    loading,
+    totalFocusTime,
+    todayFocusTime,
+    earliestYear,
+    chartData,
+    fetchStats
+  } = useStudyStats();
+
   const currentYear = new Date().getFullYear();
   const today = new Date();
 
@@ -99,186 +87,43 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
     return `${hours}h`;
   };
 
-  const fetchReportData = useCallback(async () => {
-    setLoading(true);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
-    let start: Date;
-    let end: Date;
-
-    if (viewMode === 'week') {
-      start = activeWeekStart;
-      end = endOfDay(addDays(start, 6)); // Monday to Sunday (include entire Sunday)
-    } else if (viewMode === 'month') {
-      start = startOfMonth(activeMonth);
-      end = endOfMonth(activeMonth);
-    } else {
-      const targetDate = new Date(activeYear, 0, 1);
-      start = startOfYear(targetDate);
-      end = endOfYear(targetDate);
-    }
-
-    const { data: periodSessions } = await supabase
-      .from('study_sessions')
-      .select('duration, created_at, task')
-      .eq('user_id', user.id)
-      .gte('created_at', start.toISOString())
-      .lte('created_at', end.toISOString());
-
-    const { data: allSessions } = await supabase
-      .from('study_sessions')
-      .select('duration, created_at')
-      .eq('user_id', user.id);
-
-    const totalSeconds =
-      allSessions?.reduce((acc, curr) => acc + curr.duration, 0) || 0;
-    setTotalFocusTime(totalSeconds);
-
-    const earliestSessionDate =
-      allSessions?.reduce<Date | null>((acc, curr) => {
-        const createdAt = curr.created_at ? new Date(curr.created_at) : null;
-        if (!createdAt || Number.isNaN(createdAt.getTime())) return acc;
-        if (!acc || createdAt < acc) return createdAt;
-        return acc;
-      }, null) ?? null;
-
-    if (earliestSessionDate) {
-      const firstYear = earliestSessionDate.getFullYear();
-      setEarliestYear((prev) =>
-        prev === null || firstYear < prev ? firstYear : prev
-      );
-    }
-
-    // Get today's sessions based on 5 AM reset time
-    const todaySessions = await supabase
-      .from('study_sessions')
-      .select('duration')
-      .eq('user_id', user.id)
-      .gte('created_at', getDayStart().toISOString())
-      .lte('created_at', getDayEnd().toISOString());
-
-    const todaySeconds =
-      todaySessions.data?.reduce((acc, curr) => acc + curr.duration, 0) || 0;
-    setTodayFocusTime(todaySeconds);
-
-    const buckets: Record<
-      string,
-      {
-        label: string;
-        seconds: number;
-        taskTotals: Record<string, number>;
-        breakdown: string;
-      }
-    > = {};
-
-    if (viewMode === 'week') {
-      const dayLabels = ['월', '화', '수', '목', '금', '토', '일'];
-      const dayFull = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
-      for (let i = 0; i < 7; i++) {
-        const day = addDays(start, i);
-        const key = format(day, 'yyyy-MM-dd');
-        buckets[key] = {
-          label: `${dayLabels[i]} (${format(day, 'M/d')})`,
-          seconds: 0,
-          taskTotals: {},
-          breakdown: `${dayFull[i]} 작업별 집중 시간`,
-        };
-      }
-    } else if (viewMode === 'month') {
-      const daysInMonth = end.getDate();
-      for (let d = 1; d <= daysInMonth; d++) {
-        const day = new Date(start.getFullYear(), start.getMonth(), d);
-        const key = format(day, 'yyyy-MM-dd');
-        buckets[key] = {
-          label: String(d),
-          seconds: 0,
-          taskTotals: {},
-          breakdown: `${d}일의 작업별 집중 시간`,
-        };
-      }
-    } else {
-      for (let m = 0; m < 12; m++) {
-        const monthDate = new Date(start.getFullYear(), m, 1);
-        const key = format(monthDate, 'yyyy-MM');
-        buckets[key] = {
-          label: `${m + 1}`,
-          seconds: 0,
-          taskTotals: {},
-          breakdown: `${m + 1}월의 작업별 집중 시간`,
-        };
-      }
-    }
-
-    periodSessions?.forEach((session) => {
-      const sessionDate = new Date(session.created_at);
-      // Use study day start (5AM reset) to determine which calendar day this session belongs to
-      const studyDayDate = getDayStart(sessionDate);
-      let bucketKey = '';
-
-      if (viewMode === 'week' || viewMode === 'month') {
-        bucketKey = format(studyDayDate, 'yyyy-MM-dd');
-      } else {
-        bucketKey = format(studyDayDate, 'yyyy-MM');
-      }
-
-      if (!buckets[bucketKey]) return;
-
-      const taskName = session.task?.trim() || '작업 지정 없음';
-      buckets[bucketKey].seconds += session.duration;
-      buckets[bucketKey].taskTotals[taskName] =
-        (buckets[bucketKey].taskTotals[taskName] ?? 0) + session.duration;
-    });
-
-    const newChartData = Object.entries(buckets).map(
-      ([bucketKey, bucket]) => ({
-        name: bucket.label,
-        hours: parseFloat((bucket.seconds / 3600).toFixed(1)),
-        seconds: bucket.seconds,
-        taskTotals: bucket.taskTotals,
-        bucketKey,
-        displayLabel: bucket.label,
-        breakdownLabel:
-          bucket.breakdown ?? `${bucket.label} 작업별 집중 시간`,
-      })
-    );
-
-    const referenceDate =
-      viewMode === 'year'
-        ? new Date(activeYear, today.getMonth(), today.getDate())
-        : today;
-    const todayKey =
-      viewMode === 'year'
-        ? format(referenceDate, 'yyyy-MM')
-        : format(referenceDate, 'yyyy-MM-dd');
-    const preferredBucket =
-      newChartData.find((bucket) => bucket.bucketKey === todayKey) ??
-      newChartData[newChartData.length - 1] ??
-      null;
-
-    setChartData(newChartData);
-    setSelectedBucket(preferredBucket);
-    setLoading(false);
-  }, [viewMode, activeYear, activeMonth, activeWeekStart]);
-
+  // Fetch data when view mode or active date changes
   useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => fetchReportData(), 0);
+    setTimeout(() => {
+        let activeDate: Date;
+        if (viewMode === 'week') {
+            activeDate = activeWeekStart;
+        } else if (viewMode === 'month') {
+            activeDate = activeMonth;
+        } else {
+            activeDate = new Date(activeYear, 0, 1);
+        }
+        
+        fetchStats(viewMode, activeDate);
+    }, 0);
+  }, [viewMode, activeYear, activeMonth, activeWeekStart, fetchStats]);
+
+  // Set selected bucket when data changes
+  useEffect(() => {
+    if (chartData.length > 0) {
+      const referenceDate =
+        viewMode === 'year'
+          ? new Date(activeYear, today.getMonth(), today.getDate())
+          : today;
+      const todayKey =
+        viewMode === 'year'
+          ? format(referenceDate, 'yyyy-MM')
+          : format(referenceDate, 'yyyy-MM-dd');
+      
+      const preferredBucket =
+        chartData.find((bucket) => bucket.bucketKey === todayKey) ??
+        chartData[chartData.length - 1] ??
+        null;
+        
+      setSelectedBucket(preferredBucket);
     }
-  }, [isOpen, fetchReportData]);
+  }, [chartData, viewMode, activeYear]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
-  if (!isOpen) return null;
-
-  const startYear = earliestYear ?? currentYear;
-  const yearOptions: number[] = [];
-  for (let y = currentYear; y >= startYear; y--) {
-    yearOptions.push(y);
-  }
 
   const tabBase = 'px-4 py-1.5 text-xs font-bold rounded-md transition-all';
   const tabActive =
@@ -287,52 +132,7 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
     'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-700';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in p-4">
-      <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] transition-colors duration-300">
-        <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-slate-700">
-          <div className="flex items-center gap-3">
-            <span className="bg-rose-100 text-rose-500 dark:bg-rose-900/30 dark:text-rose-400 p-2 rounded-xl">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-5 h-5"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
-                />
-              </svg>
-            </span>
-            <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-              Report
-            </h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <div className="p-6 overflow-y-auto scrollbar-hide">
+    <div className="animate-fade-in w-full">
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div className="bg-gray-50 dark:bg-slate-700/50 p-5 rounded-2xl border border-gray-100 dark:border-slate-600">
               <div className="text-gray-400 text-xs uppercase font-bold tracking-wider mb-2">
@@ -484,7 +284,7 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
 
             <div className="h-64 w-full relative">
               {loading ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-slate-800/50 z-10">
+                <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-slate-800/50 z-10 transition-opacity duration-300">
                   <div className="text-gray-400 animate-pulse text-sm">
                     Loading data...
                   </div>
@@ -593,8 +393,6 @@ export default function ReportModal({ isOpen, onClose }: ReportModalProps) {
               )}
             </div>
           </div>
-        </div>
-      </div>
     </div>
   );
 }
