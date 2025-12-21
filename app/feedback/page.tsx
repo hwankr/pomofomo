@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { Send, Plus, MessageSquare, ChevronLeft, Loader2, User as UserIcon, AlertTriangle, Image as ImageIcon, X, List, History } from 'lucide-react';
@@ -33,7 +33,7 @@ const isMyMessage = (msgUserId: string | null, currentUserId: string) => {
     return msgUserId === currentUserId;
 };
 
-export default function FeedbackPage() {
+function FeedbackContent() {
     const [view, setView] = useState<'list' | 'chat' | 'new'>('list');
     const [activeTab, setActiveTab] = useState<'feedback' | 'changelog'>('changelog');
     const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
@@ -696,5 +696,13 @@ export default function FeedbackPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function FeedbackPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>}>
+            <FeedbackContent />
+        </Suspense>
     );
 }
