@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { Send, Plus, MessageSquare, ChevronLeft, Loader2, User as UserIcon, AlertTriangle, Image as ImageIcon, X, List, History } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Session } from '@supabase/supabase-js';
 import toast from 'react-hot-toast';
 import Navbar from '@/components/Navbar';
@@ -54,10 +54,19 @@ export default function FeedbackPage() {
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
     const { markAsRead: markChangelogAsRead } = useUnreadChangelogCount();
+
+    // Check query params for tab selection
+    useEffect(() => {
+        const tabParam = searchParams.get('tab');
+        if (tabParam === 'feedback') {
+            setActiveTab('feedback');
+        }
+    }, [searchParams]);
 
     const scrollToBottom = () => {
         if (chatContainerRef.current) {
