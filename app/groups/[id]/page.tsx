@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { toast, Toaster } from 'react-hot-toast';
 import MemberReportModal from '@/components/MemberReportModal';
 import MemberCard from '@/components/groups/MemberCard';
+import TransferLeadershipModal from '@/components/groups/TransferLeadershipModal';
 
 interface Member {
     id: string; // group_member id
@@ -45,6 +46,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     const [tempGroupName, setTempGroupName] = useState('');
     const [selectedMemberForReport, setSelectedMemberForReport] = useState<{ id: string; name: string } | null>(null);
     const [studyTimes, setStudyTimes] = useState<Record<string, number>>({});
+    const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
 
     const formatStudyTime = (seconds: number) => {
         const hours = Math.floor(seconds / 3600);
@@ -202,7 +204,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                     // 그룹 멤버의 세션이 변경되면 공부 시간 다시 fetch
                     const userId = payload.new?.user_id || payload.old?.user_id;
                     console.log('[Group Realtime] study_sessions change detected for user:', userId);
-                    
+
                     // 현재 멤버 목록에 있는 사용자인지 확인
                     setMembers((currentMembers) => {
                         if (currentMembers.some(m => m.user_id === userId)) {
@@ -445,12 +447,20 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                                 )}
 
                                 {isLeader ? (
-                                    <button
-                                        onClick={handleDeleteGroup}
-                                        className="px-4 py-2 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors font-medium text-sm"
-                                    >
-                                        그룹 삭제
-                                    </button>
+                                    <>
+                                        <button
+                                            onClick={() => setIsTransferModalOpen(true)}
+                                            className="px-4 py-2 bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors font-medium text-sm"
+                                        >
+                                            그룹장 이양
+                                        </button>
+                                        <button
+                                            onClick={handleDeleteGroup}
+                                            className="px-4 py-2 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors font-medium text-sm"
+                                        >
+                                            그룹 삭제
+                                        </button>
+                                    </>
                                 ) : (
                                     <button
                                         onClick={handleLeaveGroup}
@@ -513,6 +523,18 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                     onClose={() => setSelectedMemberForReport(null)}
                     userId={selectedMemberForReport.id}
                     userName={selectedMemberForReport.name}
+                />
+            )}
+
+            {isTransferModalOpen && group && currentUser && (
+                <TransferLeadershipModal
+                    isOpen={isTransferModalOpen}
+                    onClose={() => setIsTransferModalOpen(false)}
+                    groupId={group.id}
+                    groupName={group.name}
+                    members={members}
+                    currentUserId={currentUser.id}
+                    onTransferred={fetchGroupData}
                 />
             )}
         </div>

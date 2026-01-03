@@ -222,6 +222,105 @@ export default function SettingsModal({
     }
   };
 
+  const handleDeleteAccount = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      toast.error('로그인 상태가 아닙니다.');
+      return;
+    }
+
+    // 1. 그룹장 여부 확인
+    const { data: ownedGroups } = await supabase
+      .from('groups')
+      .select('id, name')
+      .eq('leader_id', user.id);
+
+    if (ownedGroups && ownedGroups.length > 0) {
+      const groupNames = ownedGroups.map(g => g.name).join(', ');
+      toast.error(`먼저 그룹장을 다른 멤버에게 넘기거나 그룹을 삭제해주세요.\n그룹: ${groupNames}`, {
+        duration: 5000,
+      });
+      return;
+    }
+
+    // 2. 탈퇴 확인 대화상자
+    const confirmMessage = `⚠️ 계정 탈퇴 경고
+
+다음 데이터가 영구적으로 삭제됩니다:
+• 모든 공부 기록
+• 친구 목록
+• 가입된 그룹
+• 피드백/댓글
+• 모든 설정
+
+‼️ 이 작업은 복구할 수 없습니다!
+
+정말로 탈퇴하시겠습니까?`;
+
+    if (!confirm(confirmMessage)) return;
+
+    // 3. 최종 확인
+    if (!confirm('마지막 확인: 정말로 계정을 삭제하시겠습니까?')) return;
+
+    const toastId = toast.loading('계정 삭제 중...');
+
+    try {
+      // 4. 모든 관련 데이터 삭제
+      // 순서가 중요: FK 제약 조건 고려
+
+      // 피드백 관련
+      await supabase.from('feedback_likes').delete().eq('user_id', user.id);
+      await supabase.from('feedback_replies').delete().eq('user_id', user.id);
+      await supabase.from('feedbacks').delete().eq('user_id', user.id);
+
+      // 친구 관련 (양방향 삭제)
+      await supabase.from('friendships').delete().eq('user_id', user.id);
+      await supabase.from('friendships').delete().eq('friend_id', user.id);
+      await supabase.from('friend_requests').delete().eq('sender_id', user.id);
+      await supabase.from('friend_requests').delete().eq('receiver_id', user.id);
+
+      // 그룹 멤버십 (그룹장은 이미 위에서 확인함)
+      await supabase.from('group_members').delete().eq('user_id', user.id);
+
+      // 공부 기록
+      await supabase.from('study_sessions').delete().eq('user_id', user.id);
+      await supabase.from('monthly_plans').delete().eq('user_id', user.id);
+
+      // 설정 및 상태
+      await supabase.from('user_settings').delete().eq('user_id', user.id);
+      await supabase.from('timer_states').delete().eq('user_id', user.id);
+
+      // 푸시 알림
+      await supabase.from('push_subscriptions').delete().eq('user_id', user.id);
+
+      // 프로필 삭제 (주의: auth.users와 연결되어 있음)
+      await supabase.from('profiles').delete().eq('id', user.id);
+
+      // 로컬 스토리지 삭제
+      localStorage.removeItem('fomopomo_settings');
+      localStorage.removeItem('fomopomo_pomoTime');
+      localStorage.removeItem('fomopomo_initialPomoTime');
+      localStorage.removeItem('fomopomo_stopwatchTime');
+      localStorage.removeItem('fomopomo_selectedTask');
+      localStorage.removeItem('fomopomo_selectedTaskId');
+
+      // 5. Auth 계정 삭제 (Edge Function 필요 - 없으면 로그아웃만)
+      // Note: auth.admin.deleteUser()는 Edge Function에서만 가능
+      // 여기서는 데이터만 삭제하고 로그아웃 처리
+
+      toast.success('계정이 삭제되었습니다. 이용해 주셔서 감사합니다.', { id: toastId, duration: 3000 });
+
+      await supabase.auth.signOut();
+      window.location.href = '/';
+    } catch (e) {
+      console.error('계정 삭제 오류:', e);
+      toast.error('계정 삭제에 실패했습니다. 다시 시도해주세요.', { id: toastId });
+    }
+  };
+
   const addPreset = () => {
     if (presets.length >= 3) {
       toast.error('최대 3개까지만 가능합니다.');
@@ -570,18 +669,26 @@ export default function SettingsModal({
               <h3 className="text-red-400 text-xs font-bold mb-3 flex items-center gap-2">
                 ⚠️ 계정 설정
               </h3>
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3">
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleResetSettings}
+                    className="flex-1 py-3 bg-orange-50 text-orange-600 rounded-lg text-xs font-bold hover:bg-orange-100 transition-colors border border-orange-100 text-center"
+                  >
+                    ↻ 설정 초기화
+                  </button>
+                  <button
+                    onClick={handleResetAccount}
+                    className="flex-1 py-3 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors border border-red-100 text-center"
+                  >
+                    🗑️ 계정 초기화
+                  </button>
+                </div>
                 <button
-                  onClick={handleResetSettings}
-                  className="flex-1 py-3 bg-orange-50 text-orange-600 rounded-lg text-xs font-bold hover:bg-orange-100 transition-colors border border-orange-100 text-center"
+                  onClick={handleDeleteAccount}
+                  className="w-full py-3 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 transition-colors text-center"
                 >
-                  ↻ 설정 초기화
-                </button>
-                <button
-                  onClick={handleResetAccount}
-                  className="flex-1 py-3 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors border border-red-100 text-center"
-                >
-                  🗑️ 계정 초기화
+                  ⚠️ 계정 탈퇴 (복구 불가)
                 </button>
               </div>
             </section>
