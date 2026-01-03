@@ -23,6 +23,13 @@ interface TransferLeadershipModalProps {
     onTransferred: () => void;
 }
 
+type SupabaseErrorLike = {
+    message?: string;
+    details?: string;
+    hint?: string;
+    code?: string;
+};
+
 export default function TransferLeadershipModal({
     isOpen,
     onClose,
@@ -34,6 +41,17 @@ export default function TransferLeadershipModal({
 }: TransferLeadershipModalProps) {
     const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
     const [isTransferring, setIsTransferring] = useState(false);
+
+    const getErrorMessage = (error: unknown) => {
+        if (!error) return null;
+        if (typeof error === 'string') return error;
+        if (error instanceof Error && error.message) return error.message;
+        if (typeof error === 'object') {
+            const details = error as SupabaseErrorLike;
+            return details.message || details.details || details.hint || null;
+        }
+        return null;
+    };
 
     // 본인을 제외한 멤버 목록
     const otherMembers = members.filter((m) => m.user_id !== currentUserId);
@@ -67,7 +85,8 @@ export default function TransferLeadershipModal({
             onClose();
         } catch (error) {
             console.error('Error transferring leadership:', error);
-            toast.error('그룹장 이양에 실패했습니다.', { id: toastId });
+            const errorMessage = getErrorMessage(error);
+            toast.error(errorMessage || '그룹장 이양에 실패했습니다.', { id: toastId });
         } finally {
             setIsTransferring(false);
         }

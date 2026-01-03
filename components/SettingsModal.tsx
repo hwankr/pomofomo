@@ -33,6 +33,12 @@ type Settings = {
   presets: Preset[];
 };
 
+type ConflictPayload = {
+  groups?: { name?: string | null }[];
+  error?: string;
+  message?: string;
+};
+
 const DEFAULT_SETTINGS = {
   pomoTime: 25,
   shortBreak: 5,
@@ -79,6 +85,7 @@ export default function SettingsModal({
   const [presets, setPresets] = useState<Preset[]>(DEFAULT_SETTINGS.presets);
   const [isResetSettingsConfirmOpen, setIsResetSettingsConfirmOpen] = useState(false);
   const [isResetAccountConfirmOpen, setIsResetAccountConfirmOpen] = useState(false);
+  const [isDeleteAccountConfirmOpen, setIsDeleteAccountConfirmOpen] = useState(false);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -209,10 +216,36 @@ export default function SettingsModal({
     ].forEach((key) => localStorage.removeItem(key));
   };
 
+  const getConflictMessage = (
+    payload: ConflictPayload | null | undefined,
+    actionLabel: string
+  ) => {
+    const groupNames = Array.isArray(payload?.groups)
+      ? payload.groups
+          .map((group) => group?.name)
+          .filter((name: string | null | undefined): name is string =>
+            typeof name === 'string' && name.length > 0
+          )
+      : [];
+
+    if (groupNames.length > 0) {
+      return `그룹장을 이양한 뒤에 ${actionLabel}할 수 있습니다.\n그룹: ${groupNames.join(', ')}`;
+    }
+
+    if (payload?.error === 'leader') {
+      return `그룹장을 이양한 뒤에 ${actionLabel}할 수 있습니다.`;
+    }
+
+    if (typeof payload?.message === 'string' && payload.message.trim().length > 0) {
+      return payload.message;
+    }
+
+    return null;
+  };
+
   const handleResetAccount = async () => {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    const user = session?.user;
-    if (sessionError || !user) {
+    if (sessionError || !session?.user) {
       toast.error('로그인 상태가 아닙니다.');
       return;
     }
@@ -232,18 +265,21 @@ export default function SettingsModal({
         },
       });
 
-      const payload = await response.json().catch(() => ({}));
+      const payload = (await response.json().catch(() => ({}))) as ConflictPayload;
 
       if (!response.ok) {
-        if (response.status === 409 && Array.isArray(payload?.groups)) {
-          const groupNames = payload.groups.map((g: { name: string }) => g.name).join(', ');
-          toast.error(`그룹장을 이양한 뒤에 초기화할 수 있습니다.\n그룹: ${groupNames}`, {
-            id: toastId,
-            duration: 5000,
-          });
-          return;
+        if (response.status === 409) {
+          const conflictMessage = getConflictMessage(payload, '초기화');
+          if (conflictMessage) {
+            toast.error(conflictMessage, { id: toastId, duration: 5000 });
+            return;
+          }
         }
-        toast.error(payload?.error || '초기화 실패', { id: toastId });
+        const errorMessage =
+          (typeof payload?.message === 'string' && payload.message) ||
+          (typeof payload?.error === 'string' && payload.error) ||
+          '초기화 실패';
+        toast.error(errorMessage, { id: toastId });
         return;
       }
 
@@ -258,97 +294,54 @@ export default function SettingsModal({
   };
 
   const handleDeleteAccount = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session?.user) {
       toast.error('로그인 상태가 아닙니다.');
       return;
     }
 
-    // 1. 그룹장 여부 확인
-    const { data: ownedGroups } = await supabase
-      .from('groups')
-      .select('id, name')
-      .eq('leader_id', user.id);
-
-    if (ownedGroups && ownedGroups.length > 0) {
-      const groupNames = ownedGroups.map(g => g.name).join(', ');
-      toast.error(`먼저 그룹장을 다른 멤버에게 넘기거나 그룹을 삭제해주세요.\n그룹: ${groupNames}`, {
-        duration: 5000,
-      });
-      return;
-    }
-
-    // 2. 탈퇴 확인 대화상자
-    const confirmMessage = `⚠️ 계정 탈퇴 경고
-
-다음 데이터가 영구적으로 삭제됩니다:
-• 모든 공부 기록
-• 친구 목록
-• 가입된 그룹
-• 피드백/댓글
-• 모든 설정
-
-‼️ 이 작업은 복구할 수 없습니다!
-
-정말로 탈퇴하시겠습니까?`;
-
-    if (!confirm(confirmMessage)) return;
-
-    // 3. 최종 확인
-    if (!confirm('마지막 확인: 정말로 계정을 삭제하시겠습니까?')) return;
-
     const toastId = toast.loading('계정 삭제 중...');
 
     try {
-      // 4. 모든 관련 데이터 삭제
-      // 순서가 중요: FK 제약 조건 고려
+      if (!session?.access_token) {
+        toast.error('로그인 정보가 유효하지 않습니다.', { id: toastId });
+        return;
+      }
 
-      // 피드백 관련
-      await supabase.from('feedback_likes').delete().eq('user_id', user.id);
-      await supabase.from('feedback_replies').delete().eq('user_id', user.id);
-      await supabase.from('feedbacks').delete().eq('user_id', user.id);
+      const response = await fetch('/api/account-delete', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
 
-      // 친구 관련 (양방향 삭제)
-      await supabase.from('friendships').delete().eq('user_id', user.id);
-      await supabase.from('friendships').delete().eq('friend_id', user.id);
-      await supabase.from('friend_requests').delete().eq('sender_id', user.id);
-      await supabase.from('friend_requests').delete().eq('receiver_id', user.id);
+      const payload = (await response.json().catch(() => ({}))) as ConflictPayload;
 
-      // 그룹 멤버십 (그룹장은 이미 위에서 확인함)
-      await supabase.from('group_members').delete().eq('user_id', user.id);
+      if (!response.ok) {
+        if (response.status === 409) {
+          const conflictMessage = getConflictMessage(payload, '탈퇴');
+          if (conflictMessage) {
+            toast.error(conflictMessage, { id: toastId, duration: 5000 });
+            return;
+          }
+        }
+        const errorMessage =
+          (typeof payload?.message === 'string' && payload.message) ||
+          (typeof payload?.error === 'string' && payload.error) ||
+          '계정 삭제 실패';
+        toast.error(errorMessage, { id: toastId });
+        return;
+      }
 
-      // 공부 기록
-      await supabase.from('study_sessions').delete().eq('user_id', user.id);
-      await supabase.from('monthly_plans').delete().eq('user_id', user.id);
-
-      // 설정 및 상태
-      await supabase.from('user_settings').delete().eq('user_id', user.id);
-      await supabase.from('timer_states').delete().eq('user_id', user.id);
-
-      // 푸시 알림
-      await supabase.from('push_subscriptions').delete().eq('user_id', user.id);
-
-      // 프로필 삭제 (주의: auth.users와 연결되어 있음)
-      await supabase.from('profiles').delete().eq('id', user.id);
-
-      // 로컬 스토리지 삭제
-      localStorage.removeItem('fomopomo_settings');
-      localStorage.removeItem('fomopomo_pomoTime');
-      localStorage.removeItem('fomopomo_initialPomoTime');
-      localStorage.removeItem('fomopomo_stopwatchTime');
-      localStorage.removeItem('fomopomo_selectedTask');
-      localStorage.removeItem('fomopomo_selectedTaskId');
-
-      // 5. Auth 계정 삭제 (Edge Function 필요 - 없으면 로그아웃만)
-      // Note: auth.admin.deleteUser()는 Edge Function에서만 가능
-      // 여기서는 데이터만 삭제하고 로그아웃 처리
+      clearAccountLocalStorage();
 
       toast.success('계정이 삭제되었습니다. 이용해 주셔서 감사합니다.', { id: toastId, duration: 3000 });
 
-      await supabase.auth.signOut();
+      try {
+        await supabase.auth.signOut();
+      } catch (error) {
+        console.error('로그아웃 실패:', error);
+      }
       window.location.href = '/';
     } catch (e) {
       console.error('계정 삭제 오류:', e);
@@ -720,7 +713,7 @@ export default function SettingsModal({
                   </button>
                 </div>
                 <button
-                  onClick={handleDeleteAccount}
+                  onClick={() => setIsDeleteAccountConfirmOpen(true)}
                   className="w-full py-3 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 transition-colors text-center"
                 >
                   ⚠️ 계정 탈퇴 (복구 불가)
@@ -792,6 +785,34 @@ export default function SettingsModal({
           </div>
         )}
         confirmText="초기화"
+        cancelText="취소"
+        isDangerous={true}
+      />
+      <ConfirmModal
+        isOpen={isDeleteAccountConfirmOpen}
+        onClose={() => setIsDeleteAccountConfirmOpen(false)}
+        onConfirm={handleDeleteAccount}
+        title="계정 탈퇴"
+        message={(
+          <div className="space-y-3 text-sm">
+            <p>다음 데이터가 영구적으로 삭제됩니다.</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>공부 기록/시간</li>
+              <li>친구/친구 요청</li>
+              <li>가입된 그룹 (자동 탈퇴, 혼자만 있는 그룹은 삭제)</li>
+              <li>할 일/주간·월간 플랜</li>
+              <li>피드백/댓글/좋아요</li>
+              <li>설정/알림</li>
+            </ul>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              다른 멤버가 있는 그룹의 그룹장은 이양 후에 탈퇴할 수 있습니다.
+            </p>
+            <p className="text-xs text-rose-500 font-semibold">
+              이 작업은 복구할 수 없습니다.
+            </p>
+          </div>
+        )}
+        confirmText="탈퇴"
         cancelText="취소"
         isDangerous={true}
       />
