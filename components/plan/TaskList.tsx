@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
-import { CheckCircle2, Circle, Plus, Trash2, GripVertical, Pencil, Check, X } from 'lucide-react';
+import { CheckCircle2, Circle, Plus, Trash2, GripVertical, Pencil, Check, X, Pin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ConfirmModal from '@/components/ConfirmModal';
 import {
@@ -33,6 +33,12 @@ interface Task {
   position: number;
 }
 
+interface PinnedTask {
+  id: string;
+  title: string;
+  position: number;
+}
+
 const formatDuration = (seconds: number) => {
   if (!seconds) return null;
   const h = Math.floor(seconds / 3600);
@@ -46,9 +52,11 @@ interface SortableTaskItemProps {
   toggleTaskStatus: (task: Task) => void;
   deleteTask: (id: string) => void;
   updateTask: (id: string, title: string) => void;
+  pinTask: (task: Task) => void;
+  isPinned: boolean;
 }
 
-function SortableTaskItem({ task, toggleTaskStatus, deleteTask, updateTask }: SortableTaskItemProps) {
+function SortableTaskItem({ task, toggleTaskStatus, deleteTask, updateTask, pinTask, isPinned }: SortableTaskItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(task.title);
 
@@ -140,9 +148,18 @@ function SortableTaskItem({ task, toggleTaskStatus, deleteTask, updateTask }: So
         </div>
       ) : (
         <span className={cn(
-          "flex-1 font-medium transition-all",
+          "flex-1 font-medium transition-all flex items-center gap-2",
           task.status === 'done' ? "text-gray-400 line-through" : "text-gray-700 dark:text-gray-200"
         )}>
+          {isPinned && (
+            <button
+              onClick={() => pinTask(task)}
+              className="text-amber-500 hover:text-amber-600 transition-colors"
+              title="고정 해제"
+            >
+              <Pin className="w-4 h-4 flex-shrink-0" />
+            </button>
+          )}
           {task.title}
         </span>
       )}
@@ -184,12 +201,78 @@ export default function TaskList({ selectedDate, userId }: TaskListProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
 
+  // Pinned Tasks state
+  const [pinnedTasks, setPinnedTasks] = useState<PinnedTask[]>([]);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Fetch pinned tasks
+  const fetchPinnedTasks = useCallback(async () => {
+    if (!userId) {
+      setPinnedTasks([]);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('pinned_tasks')
+      .select('*')
+      .eq('user_id', userId)
+      .order('position', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching pinned tasks:', error);
+    } else {
+      setPinnedTasks(data || []);
+    }
+  }, [userId]);
+
+
+
+  // Pin a task (add to pinned tasks or remove if already pinned)
+  const pinTaskFromTask = async (task: Task) => {
+    if (!userId) return;
+
+    // Check if already pinned
+    const existingPinned = pinnedTasks.find(p => p.title === task.title);
+
+    if (existingPinned) {
+      // Unpin - remove from pinned_tasks
+      const { error } = await supabase
+        .from('pinned_tasks')
+        .delete()
+        .eq('id', existingPinned.id);
+
+      if (error) {
+        console.error('Error unpinning task:', error);
+      } else {
+        setPinnedTasks(pinnedTasks.filter(p => p.id !== existingPinned.id));
+      }
+    } else {
+      // Pin - add to pinned_tasks
+      const maxPosition = pinnedTasks.length > 0 ? Math.max(...pinnedTasks.map(t => t.position || 0)) : -1;
+
+      const { data, error } = await supabase
+        .from('pinned_tasks')
+        .insert({
+          user_id: userId,
+          title: task.title,
+          position: maxPosition + 1,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error pinning task:', error);
+      } else if (data) {
+        setPinnedTasks([...pinnedTasks, data]);
+      }
+    }
+  };
 
   const fetchTasks = useCallback(async () => {
     if (!userId) {
@@ -201,36 +284,77 @@ export default function TaskList({ selectedDate, userId }: TaskListProps) {
     setLoading(true);
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
 
-    const { data, error } = await supabase
+    // 1. 먼저 고정 작업 목록 조회
+    const { data: pinnedData } = await supabase
+      .from('pinned_tasks')
+      .select('*')
+      .eq('user_id', userId);
+
+    // 2. 해당 날짜의 기존 작업 조회
+    let { data, error } = await supabase
       .from('tasks')
       .select('*')
       .eq('user_id', userId)
       .eq('due_date', dateStr)
       .order('position', { ascending: true })
-      .order('created_at', { ascending: true }); // Fallback if position is null/same
+      .order('created_at', { ascending: true });
 
     if (error) {
       console.error('Error fetching tasks:', error);
-    } else {
-      const taskIds = (data || []).map((t: any) => t.id);
-
-      const { data: sessions } = await supabase
-        .from('study_sessions')
-        .select('task_id, duration')
-        .in('task_id', taskIds);
-
-      const tasksWithDuration = (data || []).map((task: any) => {
-        const taskSessions = sessions?.filter((s: any) => s.task_id === task.id) || [];
-        const totalDuration = taskSessions.reduce((acc: number, curr: any) => acc + curr.duration, 0);
-        return { ...task, duration: totalDuration };
-      });
-      setTasks(tasksWithDuration);
+      setLoading(false);
+      return;
     }
+
+    // 3. 고정 작업 중 해당 날짜에 없는 것들 자동 생성 (오늘 또는 미래만)
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const existingTitles = new Set((data || []).map((t: any) => t.title));
+    const pinnedToCreate = (pinnedData || []).filter(p => !existingTitles.has(p.title));
+
+    if (dateStr >= today && pinnedToCreate.length > 0) {
+      const maxPosition = (data || []).length > 0
+        ? Math.max(...(data || []).map((t: any) => t.position || 0))
+        : -1;
+
+      const newTasks = pinnedToCreate.map((p, idx) => ({
+        user_id: userId,
+        title: p.title,
+        due_date: dateStr,
+        status: 'todo',
+        position: maxPosition + 1 + idx,
+      }));
+
+      const { data: insertedTasks, error: insertError } = await supabase
+        .from('tasks')
+        .insert(newTasks)
+        .select();
+
+      if (insertError) {
+        console.error('Error auto-creating pinned tasks:', insertError);
+      } else if (insertedTasks) {
+        data = [...(data || []), ...insertedTasks];
+      }
+    }
+
+    // 4. 공부 시간 계산
+    const taskIds = (data || []).map((t: any) => t.id);
+
+    const { data: sessions } = await supabase
+      .from('study_sessions')
+      .select('task_id, duration')
+      .in('task_id', taskIds);
+
+    const tasksWithDuration = (data || []).map((task: any) => {
+      const taskSessions = sessions?.filter((s: any) => s.task_id === task.id) || [];
+      const totalDuration = taskSessions.reduce((acc: number, curr: any) => acc + curr.duration, 0);
+      return { ...task, duration: totalDuration };
+    });
+    setTasks(tasksWithDuration);
     setLoading(false);
   }, [selectedDate, userId]);
 
   useEffect(() => {
     fetchTasks();
+    fetchPinnedTasks();
 
     const taskChannel = supabase
       .channel('task-list-updates')
@@ -268,7 +392,7 @@ export default function TaskList({ selectedDate, userId }: TaskListProps) {
       supabase.removeChannel(taskChannel);
       supabase.removeChannel(sessionChannel);
     };
-  }, [fetchTasks, userId]);
+  }, [fetchTasks, fetchPinnedTasks, userId]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -395,6 +519,8 @@ export default function TaskList({ selectedDate, userId }: TaskListProps) {
 
   return (
     <div className="h-full flex flex-col">
+
+
       <div className="flex-1 overflow-y-auto space-y-3 min-h-[300px]">
         {loading && tasks.length === 0 ? (
           <div className="text-center text-gray-400 py-10">작업을 불러오는 중...</div>
@@ -428,6 +554,8 @@ export default function TaskList({ selectedDate, userId }: TaskListProps) {
                   toggleTaskStatus={toggleTaskStatus}
                   deleteTask={deleteTask}
                   updateTask={updateTask}
+                  pinTask={pinTaskFromTask}
+                  isPinned={pinnedTasks.some(p => p.title === task.title)}
                 />
               ))}
             </SortableContext>
@@ -485,6 +613,7 @@ export default function TaskList({ selectedDate, userId }: TaskListProps) {
         cancelText="취소"
         isDangerous={true}
       />
+
     </div >
   );
 }
